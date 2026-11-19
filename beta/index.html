@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<!-- MAUROS VERSION: PWA v125 | 2026-11-19 | potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c0c0e" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MaurOS">
+<title>MaurOS</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f2ef;--card:#ffffff;--card2:#f7f6f3;--ink:#111111;--ink2:#4b4b4f;--mute:#8e8e93;--line:#e9e6e0;
+  --acc:#111111;--accInk:#ffffff;--red:#e10600;--redBg:#fde8e7;--green:#15803d;--greenBg:#e3f5e9;
+  --amber:#b45309;--amberBg:#fdf1dc;--blue:#1d4ed8;--blueBg:#e4ebfd;--teal:#0e7490;--tealBg:#dff4f8;
+  --violet:#6d28d9;--violetBg:#eee8fc;--r:18px;--rs:12px;
+  --sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px);--tab:62px;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0c0c0e;--card:#17171a;--card2:#1f1f23;--ink:#f4f4f5;--ink2:#c2c2c7;--mute:#85858c;--line:#2a2a2f;
+  --acc:#ffffff;--accInk:#111111;--redBg:#3a1513;--greenBg:#12301d;--amberBg:#35260f;--blueBg:#172446;--tealBg:#0f2d33;--violetBg:#271a45;
+  --shadow:none;}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;overscroll-behavior:none}
+body{overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink)}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+/* header */
+#hdr{padding:calc(var(--st) + 10px) 18px 8px;background:var(--bg);display:flex;align-items:flex-end;gap:10px;flex-shrink:0}
+#hdr h1{font-size:28px;font-weight:800;letter-spacing:-.6px;flex:1;line-height:1.1}
+#hdr .sub{font-size:12px;color:var(--mute);font-weight:500;margin-top:2px}
+.sync{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink2);background:var(--card);border:1px solid var(--line);padding:6px 10px;border-radius:20px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.dot.wait{background:var(--amber);animation:pulse 1s infinite}.dot.err{background:var(--red)}
+@keyframes pulse{50%{opacity:.3}}
+.iconbtn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);font-size:17px}
+/* views */
+#views{flex:1;position:relative;overflow:hidden}
+.view{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:4px 0 calc(var(--tab) + var(--sb) + 90px);display:none}
+.view.on{display:block}
+#v-board{padding:0;overflow:hidden}
+#v-board.on{display:flex;flex-direction:column}
+/* tabs */
+#tabs{flex-shrink:0;display:flex;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding-bottom:var(--sb);height:calc(var(--tab) + var(--sb))}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10.5px;font-weight:600;color:var(--mute);position:relative}
+.tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:var(--ink)}
+.tab .badge{position:absolute;top:6px;left:calc(50% + 6px);background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 5px;min-width:17px;text-align:center}
+#fab{position:fixed;right:18px;bottom:calc(var(--tab) + var(--sb) + 16px);width:56px;height:56px;border-radius:18px;background:var(--acc);color:var(--accInk);font-size:28px;font-weight:300;box-shadow:0 8px 24px rgba(0,0,0,.22);z-index:20;display:grid;place-items:center}
+/* blocks */
+.sec{padding:0 16px;margin-top:18px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 8px}
+.sec-h h2{font-size:17px;font-weight:700;letter-spacing:-.2px}
+.sec-h a,.link{font-size:13px;font-weight:600;color:var(--blue)}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--line);overflow:hidden}
+.pad{padding:14px 16px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;text-align:left;box-shadow:var(--shadow);position:relative;min-height:84px}
+.kpi:active{transform:scale(.98)}
+.kpi .l{font-size:12px;font-weight:600;color:var(--mute)}
+.kpi .v{font-size:25px;font-weight:800;letter-spacing:-.8px;margin-top:4px}
+.kpi .s{font-size:11.5px;color:var(--mute);margin-top:2px}
+.kpi .chev{position:absolute;right:12px;top:12px;color:var(--mute);font-size:13px}
+.v.red{color:var(--red)}.v.green{color:var(--green)}.v.amber{color:var(--amber)}.v.blue{color:var(--blue)}
+.delta{font-size:11px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:4px}
+.delta.up{background:var(--greenBg);color:var(--green)}.delta.dn{background:var(--redBg);color:var(--red)}
+/* rows */
+.row{display:flex;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);align-items:flex-start;text-align:left;width:100%}
+.row:last-child{border-bottom:none}
+.row:active{background:var(--card2)}
+.av{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:14px;flex-shrink:0}
+.rm{flex:1;min-width:0}
+.rt{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.rt b{font-weight:650;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.price{font-weight:700;font-size:14px;white-space:nowrap}
+.rs{font-size:13px;color:var(--ink2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.pill{font-size:11px;font-weight:650;padding:3px 8px;border-radius:20px;white-space:nowrap;background:var(--card2);color:var(--ink2)}
+.p-red{background:var(--redBg);color:var(--red)}.p-green{background:var(--greenBg);color:var(--green)}.p-amber{background:var(--amberBg);color:var(--amber)}
+.p-blue{background:var(--blueBg);color:var(--blue)}.p-teal{background:var(--tealBg);color:var(--teal)}.p-violet{background:var(--violetBg);color:var(--violet)}
+.blink{animation:pulse 1.2s infinite}
+/* chips */
+.hscroll{display:flex;gap:8px;overflow-x:auto;padding:2px 16px 10px;scrollbar-width:none}
+.hscroll::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:8px 13px;border-radius:20px;background:var(--card);border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ink2);white-space:nowrap}
+.chip.on{background:var(--acc);color:var(--accInk);border-color:var(--acc)}
+.chip .n{opacity:.6;margin-left:4px;font-weight:700}
+.seg{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:3px;margin:0 16px 12px}
+.seg button{flex:1;padding:8px 6px;border-radius:9px;font-size:13px;font-weight:650;color:var(--ink2)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.search{margin:0 16px 10px;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 12px}
+.search input{flex:1;border:none;background:none;padding:12px 0;font-size:15px;outline:none}
+.empty{text-align:center;color:var(--mute);padding:34px 16px;font-size:14px}
+.more{width:100%;padding:14px;font-weight:650;color:var(--blue);font-size:14px}
+/* board */
+#bchips{flex-shrink:0;padding-top:4px}
+#btrack{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
+#btrack::-webkit-scrollbar{display:none}
+.bcol{flex:0 0 100%;scroll-snap-align:center;overflow-y:auto;padding:2px 16px calc(var(--tab) + var(--sb) + 40px);-webkit-overflow-scrolling:touch}
+.bhead{display:flex;align-items:center;gap:8px;margin:4px 4px 10px;font-weight:700;font-size:15px}
+.bhead .cnt{color:var(--mute);font-weight:600}
+.bcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:9px;box-shadow:var(--shadow);position:relative;text-align:left;width:100%;display:block}
+.bcard:active{transform:scale(.985)}
+.bcard .more-btn{position:absolute;right:6px;top:6px;width:34px;height:34px;border-radius:10px;color:var(--mute);font-size:18px}
+.pager{display:flex;justify-content:center;gap:5px;padding:2px 0 6px}
+.pager i{width:6px;height:6px;border-radius:3px;background:var(--line);transition:all .2s}
+.pager i.on{width:18px;background:var(--ink)}
+/* screens */
+.screen{position:fixed;inset:0;background:var(--bg);z-index:40;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .26s cubic-bezier(.2,.8,.2,1);box-shadow:-10px 0 30px rgba(0,0,0,.08)}
+.screen.in{transform:none}
+.shdr{padding:calc(var(--st) + 8px) 10px 8px;display:flex;align-items:center;gap:6px;flex-shrink:0;background:var(--bg)}
+.shdr .t{flex:1;font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.back{display:flex;align-items:center;gap:2px;font-weight:600;font-size:16px;color:var(--blue);padding:8px}
+.sbody{flex:1;overflow-y:auto;padding-bottom:calc(var(--sb) + 110px)}
+.hero{padding:6px 18px 4px}
+.hero h2{font-size:24px;font-weight:800;letter-spacing:-.5px}
+.hero .p{font-size:14px;color:var(--ink2);margin-top:3px}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 16px 4px}
+.act{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;font-weight:650;color:var(--ink2)}
+.act .i{font-size:20px;line-height:1}
+.act:active{background:var(--card2)}
+.kv{display:flex;justify-content:space-between;gap:14px;padding:11px 16px;border-bottom:1px solid var(--line);font-size:14px}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--mute);flex-shrink:0}
+.kv .vv{text-align:right;font-weight:550;word-break:break-word}
+.kv .vv.mono{font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.copy{color:var(--blue);font-weight:650;margin-left:6px}
+/* form */
+.fgroup{margin:16px 16px 0}
+.fgroup h3{font-size:12px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.06em;margin:0 4px 6px}
+.field{display:flex;flex-direction:column;padding:9px 14px;border-bottom:1px solid var(--line)}
+.field:last-child{border-bottom:none}
+.field label{font-size:11.5px;color:var(--mute);font-weight:600}
+.field input,.field select,.field textarea{border:none;background:none;outline:none;padding:4px 0 2px;font-size:16px;width:100%}
+.field textarea{min-height:64px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr}
+.two .field:first-child{border-right:1px solid var(--line)}
+.savebar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(var(--sb) + 12px);background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);z-index:45}
+.btn{width:100%;padding:15px;border-radius:15px;background:var(--acc);color:var(--accInk);font-weight:700;font-size:16px}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.5}
+/* sheet */
+#sb{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+#sb.on{opacity:1;pointer-events:auto}
+#sheet{position:fixed;left:0;right:0;bottom:0;max-height:86vh;background:var(--card);border-radius:22px 22px 0 0;z-index:61;transform:translateY(105%);transition:transform .26s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;padding-bottom:var(--sb)}
+#sheet.on{transform:none}
+.grab{width:38px;height:5px;border-radius:3px;background:var(--line);margin:9px auto 4px}
+.sh-h{padding:6px 18px 10px;display:flex;align-items:center;gap:8px}
+.sh-h h3{flex:1;font-size:18px;font-weight:750}
+.sh-b{overflow-y:auto;padding:0 0 16px}
+.opt{display:flex;align-items:center;gap:12px;padding:14px 18px;font-size:16px;font-weight:550;width:100%;text-align:left;border-bottom:1px solid var(--line)}
+.opt:last-child{border-bottom:none}
+.opt .sw{width:12px;height:12px;border-radius:50%}
+.opt.sel{font-weight:750}
+.opt .ck{margin-left:auto;color:var(--blue)}
+/* report */
+.bars .b{margin-bottom:10px}
+.bars .bl{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;gap:8px}
+.bars .bl span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bars .bl b{font-weight:700;white-space:nowrap}
+.track{height:8px;border-radius:5px;background:var(--card2);overflow:hidden}
+.fill{height:100%;border-radius:5px;background:var(--ink)}
+.chart svg{display:block;width:100%;height:auto}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--mute);margin-top:8px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.note{font-size:12px;color:var(--mute);margin:8px 4px 0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini{background:var(--card2);border-radius:12px;padding:10px;text-align:center}
+.mini .v{font-size:18px;font-weight:800}
+.mini .l{font-size:11px;color:var(--mute);font-weight:600;margin-top:2px}
+/* toast, ptr, login */
+#toast{position:fixed;left:50%;bottom:calc(var(--tab) + var(--sb) + 86px);transform:translateX(-50%) translateY(20px);background:#111;color:#fff;padding:11px 16px;border-radius:14px;font-size:14px;font-weight:600;opacity:0;transition:all .22s;z-index:90;max-width:88vw;text-align:center;pointer-events:none}
+#toast.on{opacity:1;transform:translateX(-50%)}
+#ptr{position:absolute;top:0;left:0;right:0;height:0;display:flex;align-items:flex-end;justify-content:center;font-size:12px;color:var(--mute);font-weight:600;overflow:hidden;z-index:5}
+#login{position:fixed;inset:0;z-index:100;background:var(--bg);display:none;align-items:center;justify-content:center;padding:24px}
+#login.on{display:flex}
+#login form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+#login img{width:120px;height:120px;margin:0 auto 8px;border-radius:24px}
+#login input{padding:15px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);font-size:16px;outline:none}
+#login .msg{min-height:18px;font-size:13px;color:var(--red);text-align:center}
+.skel{height:76px;border-radius:var(--r);background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:200% 100%;animation:sk 1.2s infinite;margin-bottom:10px}
+@keyframes sk{to{background-position:-200% 0}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hdr">
+    <div style="flex:1;min-width:0"><h1 id="title">Početna</h1><div class="sub" id="subtitle"></div></div>
+    <button class="sync" id="sync" onclick="openSyncSheet()"><span class="dot" id="syncdot"></span><span id="synctxt">…</span></button>
+    <button class="iconbtn" onclick="openMenu()" aria-label="Izbornik">⋯</button>
+  </header>
+  <main id="views">
+    <div id="ptr"></div>
+    <section class="view on" id="v-home"></section>
+    <section class="view" id="v-orders"></section>
+    <section class="view" id="v-board"></section>
+    <section class="view" id="v-report"></section>
+    <section class="view" id="v-stock"></section>
+  </main>
+  <nav id="tabs">
+    <button class="tab on" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Početna</button>
+    <button class="tab" data-tab="orders"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Narudžbe<span class="badge" id="tbadge" style="display:none"></span></button>
+    <button class="tab" data-tab="board"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg>Ploča</button>
+    <button class="tab" data-tab="report"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Izvještaj</button>
+    <button class="tab" data-tab="stock"><svg viewBox="0 0 24 24"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg>Skladište</button>
+  </nav>
+</div>
+<button id="fab" onclick="openForm()" aria-label="Nova narudžba">+</button>
+<div id="sb" onclick="closeTop()"></div>
+<div id="sheet"><div class="grab"></div><div class="sh-h"><h3 id="shT"></h3></div><div class="sh-b" id="shB"></div></div>
+<div id="toast"></div>
+<div id="login"><form id="loginForm">
+  <img src="icon-512.png" alt="MaurOS">
+  <input id="lEmail" type="email" autocomplete="username" inputmode="email" placeholder="E-mail" required>
+  <input id="lPass" type="password" autocomplete="current-password" placeholder="Lozinka" required>
+  <div class="msg" id="lMsg"></div>
+  <button class="btn" type="submit">Prijava</button>
+</form></div>
+
+<script>
+'use strict';
+/* ═════════ OSNOVA ═════════ */
+const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
+const VERSION = 'v125';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
+const eur = (v, d = 0) => '€' + num(v).toLocaleString('hr-HR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const eur2 = v => eur(v, Math.round(num(v)) === num(v) ? 0 : 2);
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+};
+const haptic = () => { try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} };
+function toast(m, ms = 2200) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), ms); }
+const MJ = ['siječanj','veljača','ožujak','travanj','svibanj','lipanj','srpanj','kolovoz','rujan','listopad','studeni','prosinac'];
+const MJS = ['sij','velj','ožu','tra','svi','lip','srp','kol','ruj','lis','stu','pro'];
+const today0 = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
+const ymKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+const fmtD = d => d ? d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear() + '.' : '';
+function pDate(s) {
+  if (!s) return null;
+  const m = String(s).match(/(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+  const d = new Date(s); return isNaN(d) ? null : d;
+}
+
+/* ═════════ PRIJAVA ═════════ */
+let S = LS.get('mauros_session_v1', null);
+function authSave(s) { S = s; if (s) LS.set('mauros_session_v1', s); else { try { localStorage.removeItem('mauros_session_v1'); } catch (e) {} } }
+async function authToken(grant, body) {
+  const r = await fetch(SB + '/auth/v1/token?grant_type=' + grant, { method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || !d.access_token) throw new Error(d.error_description || d.msg || d.error || ('HTTP ' + r.status));
+  if (!d.expires_at) d.expires_at = Math.floor(Date.now() / 1000) + (d.expires_in || 3600);
+  return d;
+}
+let _ref = null;
+async function authEnsure() {
+  if (!S) { authShow(); return false; }
+  if (S.expires_at - Date.now() / 1000 > 120) return true;
+  if (!_ref) _ref = authToken('refresh_token', { refresh_token: S.refresh_token })
+    .then(d => { authSave(d); return true; })
+    .catch(e => { if (!navigator.onLine) return false; authSave(null); authShow('Prijava je istekla – prijavi se ponovno.'); return false; })
+    .finally(() => { _ref = null; });
+  return _ref;
+}
+function authShow(msg) { $('#login').classList.add('on'); $('#lMsg').textContent = msg || ''; }
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const m = $('#lMsg'); m.style.color = 'var(--mute)'; m.textContent = 'Prijavljujem…';
+  try {
+    authSave(await authToken('password', { email: $('#lEmail').value.trim(), password: $('#lPass').value }));
+    $('#lPass').value = ''; $('#login').classList.remove('on'); loadAll();
+  } catch (err) { m.style.color = 'var(--red)'; m.textContent = /invalid/i.test(err.message) ? 'Pogrešan e-mail ili lozinka.' : 'Greška: ' + err.message; }
+});
+function logout() {
+  if (Q.some(x => !x.failed)) { alert('Ima izmjena koje još nisu spremljene u bazu. Pričekaj da se spreme (internet), pa se onda odjavi.'); return; }
+  if (!confirm('Odjaviti se s ovog mobitela?')) return;
+  const t = S && S.access_token;
+  if (t) fetch(SB + '/auth/v1/logout', { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + t } }).catch(() => {});
+  authSave(null); ['m5_orders','m5_stock','m5_nabava','m5_stanje','m5_ads'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+  D = { orders: [], stock: [], nabava: [], stanje: [], ads: [] }; closeAll(); renderAll(); authShow();
+}
+
+/* ═════════ PODACI – siguran sloj ═════════
+   Pravila: ništa se ne briše; izmjene šalju SAMO promijenjena polja (PATCH);
+   nove narudžbe su čisti INSERT (nikad ne prepisuju postojeće);
+   svaka izmjena prvo ide u lokalni red (localStorage) i ostaje tamo dok baza ne potvrdi. */
+async function rest(method, path, body, prefer) {
+  if (!(await authEnsure())) { const e = new Error('Prijava potrebna'); e.auth = true; throw e; }
+  const h = { apikey: KEY, Authorization: 'Bearer ' + S.access_token, 'Content-Type': 'application/json' };
+  if (prefer) h.Prefer = prefer;
+  const r = await fetch(SB + '/rest/v1/' + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 401) { authSave(null); authShow('Prijava je istekla – prijavi se ponovno.'); const e = new Error('401'); e.auth = true; throw e; }
+  const txt = await r.text(); let d = null; try { d = txt ? JSON.parse(txt) : null; } catch (e) {}
+  if (!r.ok) { const e = new Error((d && (d.message || d.hint)) || ('HTTP ' + r.status)); e.status = r.status; e.code = d && d.code; throw e; }
+  return d;
+}
+let D = { orders: LS.get('m5_orders', []), stock: LS.get('m5_stock', []), nabava: LS.get('m5_nabava', []), stanje: LS.get('m5_stanje', []), ads: LS.get('m5_ads', []) };
+let Q = LS.get('m5_queue', []);
+let lastSync = LS.get('m5_lastsync', null), loading = false, online = true;
+function persist() { LS.set('m5_orders', D.orders); LS.set('m5_stock', D.stock); LS.set('m5_nabava', D.nabava); LS.set('m5_stanje', D.stanje); LS.set('m5_ads', D.ads); }
+function saveQ() { if (!LS.set('m5_queue', Q)) toast('⚠ Memorija mobitela je puna – izmjena možda nije sačuvana lokalno!', 4000); }
+const STATUS_MAP = { 'Printano': 'Print poslan', 'U pripremi': 'U izradi', 'Isporuceno': 'Isporučeno' };
+function normalize() { D.orders.forEach(o => { if (STATUS_MAP[o.status]) o.status = STATUS_MAP[o.status]; }); }
+function applyOp(op) {
+  const arr = D[op.table === 'orders' ? 'orders' : op.table]; if (!arr) return;
+  if (op.kind === 'patch') { const r = arr.find(x => String(x.id) === String(op.id)); if (r) Object.assign(r, op.patch); }
+  if (op.kind === 'insert' && !arr.some(x => String(x.id) === String(op.row.id))) arr.unshift(Object.assign({}, op.row));
+}
+function enqueue(op) {
+  op.qid = Date.now() + '-' + Math.random().toString(36).slice(2, 7); op.ts = new Date().toISOString();
+  Q.push(op); saveQ(); applyOp(op); normalize(); persist(); renderAll(); flush();
+}
+const patchOrder = (id, patch) => enqueue({ kind: 'patch', table: 'orders', id: String(id), patch });
+let flushing = false;
+async function flush() {
+  if (flushing || !Q.some(x => !x.failed)) { setSync(); return; }
+  flushing = true; setSync();
+  try {
+    for (const op of Q.filter(x => !x.failed)) {
+      try {
+        if (op.kind === 'patch') {
+          const res = await rest('PATCH', op.table + '?id=eq.' + encodeURIComponent(op.id), op.patch, 'return=representation');
+          if (!Array.isArray(res) || !res.length) { op.failed = 'Zapis nije pronađen u bazi'; saveQ(); continue; }
+        } else if (op.kind === 'insert') {
+          try { await rest('POST', op.table, op.row, 'return=minimal'); }
+          catch (e) { if (e.code !== '23505') throw e; } // već upisano ranije – OK
+        }
+        Q = Q.filter(x => x.qid !== op.qid); saveQ(); online = true;
+      } catch (e) {
+        if (e.auth || !e.status || e.status >= 500 || e.status === 429) { online = !!e.status; break; } // privremeno – pokušaj kasnije, NIŠTA se ne gubi
+        op.failed = e.message; saveQ(); // trajna greška – ostaje vidljivo u redu
+      }
+    }
+  } finally { flushing = false; setSync(); }
+}
+window.addEventListener('online', () => { online = true; flush(); loadAll(true); });
+window.addEventListener('offline', () => { online = false; setSync(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { flush(); if (!lastSync || Date.now() - lastSync > 60000) loadAll(true); } });
+setInterval(() => { if (Q.some(x => !x.failed)) flush(); }, 20000);
+
+async function loadAll(silent) {
+  if (loading) return; loading = true; setSync();
+  try {
+    const [o, s, n, st, a] = await Promise.all([
+      rest('GET', 'orders?select=*&order=inserted_at.desc&limit=5000'),
+      rest('GET', 'stock?select=*&limit=3000'),
+      rest('GET', 'nabava?select=*&order=id.desc&limit=3000'),
+      rest('GET', 'skladiste_stanje?select=*'),
+      rest('GET', 'ad_costs?select=*&limit=1000')
+    ]);
+    if (Array.isArray(o) && (o.length || !D.orders.length)) D.orders = o;
+    if (Array.isArray(s)) D.stock = s;
+    if (Array.isArray(n)) D.nabava = n;
+    if (Array.isArray(st)) D.stanje = st;
+    if (Array.isArray(a)) D.ads = a;
+    Q.forEach(applyOp); // izmjene koje još čekaju ostaju vidljive
+    normalize(); persist(); online = true;
+    lastSync = Date.now(); LS.set('m5_lastsync', lastSync);
+    autoDelivered();
+  } catch (e) { if (!e.auth) { online = false; if (!silent) toast('Nema veze s bazom – prikazujem spremljene podatke'); } }
+  finally { loading = false; renderAll(); flush(); }
+}
+// BOX NOW "delivered" => status Isporučeno
+function autoDelivered() {
+  D.orders.forEach(o => {
+    if (bn(o) !== 'delivered' || o.status === 'Isporučeno' || o.status === 'Otkazano') return;
+    if (Q.some(x => x.id === String(o.id) && x.patch && x.patch.status)) return;
+    patchOrder(o.id, { status: 'Isporučeno' });
+  });
+}
+function setSync() {
+  const pend = Q.filter(x => !x.failed).length, fail = Q.filter(x => x.failed).length;
+  const dot = $('#syncdot'), t = $('#synctxt');
+  dot.className = 'dot' + (fail ? ' err' : (pend || loading) ? ' wait' : (!online ? ' err' : ''));
+  t.textContent = fail ? fail + ' greška' : pend ? pend + ' čeka' : loading ? 'Učitavam' : !online ? 'Offline' : (lastSync ? 'Spremno' : '…');
+}
+
+/* ═════════ POMOĆNE ZA NARUDŽBE ═════════ */
+const ST = ['Novo', 'Print poslan', 'U izradi', 'Završeno', 'Poslano', 'Isporučeno', 'Problem'];
+const STC = { 'Novo': 'blue', 'Print poslan': 'green', 'U izradi': 'amber', 'Završeno': 'violet', 'Poslano': 'teal', 'Isporučeno': '', 'Problem': 'red', 'Otkazano': '' };
+const STHEX = { 'Novo': '#1d4ed8', 'Print poslan': '#15803d', 'U izradi': '#b45309', 'Završeno': '#6d28d9', 'Poslano': '#0e7490', 'Isporučeno': '#78716c', 'Problem': '#e10600' };
+const OKV = { 'F1 okvir vozac i staza': 'Okvir vozač + staza', 'F1 okvir vozaca': 'Okvir vozač', 'F1 staza': 'Staza', 'F1 3d podmjetaci': '3D podmetači', 'F1 privjesak': 'Privjesak', 'F1 kalendar': 'Kalendar', 'F1 lego stalak': 'Lego stalak', 'F1 bozicna kuglica': 'Božićna kuglica' };
+const BN = { 'new': ['Čeka predaju', ''], 'in-depot': ['U dostavi', 'blue'], 'in-transit': ['U dostavi', 'blue'], 'accepted-for-delivery': ['U dostavi', 'blue'], 'accepted-to-locker': ['Preuzeto', 'blue'], 'in-final-destination': ['U paketomatu', 'amber'], 'delivered': ['Dostavljeno', 'green'], 'returned': ['Vraćeno', 'red'], 'expired': ['Isteklo', 'red'], 'lost': ['Izgubljeno', 'red'], 'missing': ['Nedostaje', 'red'], 'canceled': ['Poništeno', 'red'] };
+const BN_SENT = ['in-depot', 'in-transit', 'accepted-for-delivery', 'accepted-to-locker', 'in-final-destination', 'delivered'];
+const bn = o => String(o.boxnow_status || '').toLowerCase();
+const done = o => o.status === 'Poslano' || o.status === 'Isporučeno' || o.status === 'Otkazano';
+const isFrame = o => /okvir/i.test(o.okvir || '');
+const shipped = o => o.status === 'Poslano' || o.status === 'Isporučeno' || (!!o.tracking && BN_SENT.includes(bn(o)));
+const oname = o => o.fullname || o.name || '—';
+const prod = o => OKV[o.okvir] || o.okvir || 'Narudžba';
+const short = s => String(s || '').replace(/\s*\(.*?\)/g, '').replace(/ GP$/, '');
+const created = o => pDate(o.created) || (o.inserted_at ? new Date(o.inserted_at) : null);
+function rokInfo(o) { if (!o.rok_isporuke) return null; const d = new Date(o.rok_isporuke); if (isNaN(d)) return null; d.setHours(0,0,0,0); return { d, diff: Math.round((d - today0()) / 864e5) }; }
+const isLate = o => { if (shipped(o) || o.status === 'Otkazano') return false; const r = rokInfo(o); return !!r && r.diff < 0; };
+const hasLocker = o => !!o.boxnow_locker_id || /#\s*\d+/.test(o.boxnow || '') || !!o.tracking;
+const initials = s => String(s || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
+function avatar(o) { const c = STHEX[o.status] || '#78716c'; return '<div class="av" style="background:' + c + '1a;color:' + c + '">' + esc(initials(oname(o))) + '</div>'; }
+const pill = (t, c) => '<span class="pill' + (c ? ' p-' + c : '') + '">' + t + '</span>';
+const stPill = o => pill(esc(o.status || '—'), STC[o.status]);
+function rokPill(o) {
+  if (o.status === 'Isporučeno') return '';
+  if (shipped(o)) return pill('🚚 poslano', 'teal');
+  const r = rokInfo(o); if (!r) return '';
+  const f = r.d.getDate() + '.' + (r.d.getMonth() + 1) + '.';
+  if (r.diff < 0) return pill('⚠ kasni ' + (-r.diff) + 'd', 'red');
+  if (r.diff === 0) return pill('🔴 rok danas', 'red');
+  if (r.diff <= 3) return pill('⏳ ' + f + ' · ' + r.diff + 'd', 'amber');
+  return pill('📅 ' + f);
+}
+function bnPill(o) { if (!o.tracking || !o.boxnow_status) return ''; const m = BN[bn(o)] || [bn(o), '']; return pill('📦 ' + m[0], m[1]); }
+const paidPill = o => o.paid === 'Da' ? '' : pill('Neplaćeno', 'red');
+function orderRow(o) {
+  const sub = [o.vozac, short(o.staza), o.godina].filter(Boolean).join(' · ') || o.kuglice || o.privjesci || '';
+  return '<button class="row" data-open="' + esc(o.id) + '">' + avatar(o) + '<div class="rm"><div class="rt"><b>' + esc(oname(o)) + '</b><span class="price">' + eur2(o.cijena) + '</span></div>'
+    + '<div class="rs">' + esc(prod(o)) + (sub ? ' · ' + esc(sub) : '') + '</div>'
+    + '<div class="pills">' + stPill(o) + rokPill(o) + bnPill(o) + paidPill(o) + '</div></div></button>';
+}
+const QF = {
+  aktivne: { l: 'Aktivne', f: o => !done(o) },
+  neplaceno: { l: 'Neplaćeno', f: o => o.paid !== 'Da' && o.status !== 'Otkazano' },
+  kasni: { l: 'Kasni', f: isLate },
+  uskoro: { l: 'Rok ≤ 3 dana', f: o => { if (shipped(o)) return false; const r = rokInfo(o); return !!r && r.diff >= 0 && r.diff <= 3; } },
+  print: { l: 'Čeka print', f: o => o.status === 'Novo' && isFrame(o) && o.paid === 'Da' },
+  izrada: { l: 'Za izradu', f: o => (o.status === 'Print poslan' || o.status === 'U izradi') && o.paid === 'Da' },
+  zaposlati: { l: 'Gotovo, nije poslano', f: o => o.status === 'Završeno' && !shipped(o) },
+  dostava: { l: 'U dostavi', f: o => ['in-depot', 'in-transit', 'accepted-for-delivery', 'accepted-to-locker'].includes(bn(o)) && o.status !== 'Isporučeno' },
+  paketomat: { l: 'U paketomatu', f: o => bn(o) === 'in-final-destination' },
+  bezpaketomata: { l: 'Bez paketomata', f: o => !done(o) && !hasLocker(o) && !/osobno/i.test(String(o.boxnow || '') + String(o.tracking || '')) },
+  problem: { l: 'Problem s dostavom', f: o => ['returned', 'expired', 'lost', 'missing'].includes(bn(o)) && o.status !== 'Isporučeno' }
+};
+const byRok = (a, b) => { const ra = rokInfo(a), rb = rokInfo(b); return (ra ? ra.diff : 9999) - (rb ? rb.diff : 9999); };
+
+/* ═════════ NAVIGACIJA, SLOJEVI, GESTE ═════════ */
+let tab = 'home';
+const TITLES = { home: 'Početna', orders: 'Narudžbe', board: 'Ploča', report: 'Izvještaj', stock: 'Skladište' };
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
+function go(t) {
+  if (t === tab) { const v = $('#v-' + t); if (v.scrollTop > 0) v.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  tab = t; haptic();
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + t));
+  $('#fab').style.display = (t === 'home' || t === 'orders') ? 'grid' : 'none';
+  renderView(t);
+}
+const layers = [];
+function pushLayer(close) { layers.push(close); history.pushState({ l: layers.length }, ''); }
+function closeTop() { if (layers.length) history.back(); }
+function closeAll() { while (layers.length) layers.pop()(); }
+window.addEventListener('popstate', () => { const c = layers.pop(); if (c) c(); });
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-open]'); if (!b) return; haptic();
+  if (b.closest('#sheet')) { closeTop(); setTimeout(() => openOrder(b.dataset.open), 260); } else openOrder(b.dataset.open);
+});
+// sheet
+function openSheet(title, html, onReady) {
+  $('#shT').textContent = title; $('#shB').innerHTML = html; $('#shB').scrollTop = 0;
+  $('#sb').classList.add('on'); $('#sheet').classList.add('on');
+  pushLayer(() => { $('#sb').classList.remove('on'); $('#sheet').classList.remove('on'); });
+  if (onReady) onReady($('#shB'));
+}
+// screen (desni swipe = natrag)
+function openScreen(html, onReady) {
+  const el = document.createElement('div'); el.className = 'screen'; el.innerHTML = html; document.body.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+  swipeBack(el);
+  pushLayer(() => { el.style.transition = 'transform .22s ease'; el.style.transform = 'translateX(100%)'; setTimeout(() => el.remove(), 240); });
+  if (onReady) onReady(el);
+  return el;
+}
+function swipeBack(el) {
+  let sx = 0, sy = 0, dx = 0, on = false, lock = null;
+  el.addEventListener('touchstart', e => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; dx = 0; lock = null; on = !e.target.closest('.hscroll,input,textarea,select'); }, { passive: true });
+  el.addEventListener('touchmove', e => {
+    if (!on) return; const t = e.touches[0], x = t.clientX - sx, y = t.clientY - sy;
+    if (lock === null && (Math.abs(x) > 10 || Math.abs(y) > 10)) lock = (x > 0 && Math.abs(x) > Math.abs(y) * 1.2) ? 'x' : 'y';
+    if (lock === 'x') { dx = Math.max(0, x); el.style.transition = 'none'; el.style.transform = 'translateX(' + dx + 'px)'; }
+  }, { passive: true });
+  el.addEventListener('touchend', () => {
+    if (!on || lock !== 'x') return; on = false; el.style.transition = 'transform .22s ease';
+    if (dx > 80) { haptic(); closeTop(); } else el.style.transform = '';
+  });
+}
+// povuci za osvježavanje
+(function () {
+  let sy = 0, pull = 0, active = false; const ptr = $('#ptr');
+  $('#views').addEventListener('touchstart', e => { const v = $('#v-' + tab); active = tab !== 'board' && v.scrollTop <= 0; sy = e.touches[0].clientY; pull = 0; }, { passive: true });
+  $('#views').addEventListener('touchmove', e => { if (!active) return; pull = Math.max(0, Math.min(90, (e.touches[0].clientY - sy) * .5)); ptr.style.height = pull + 'px'; ptr.textContent = pull > 60 ? '↻ Pusti za osvježavanje' : '↓ Povuci za osvježavanje'; }, { passive: true });
+  $('#views').addEventListener('touchend', () => { if (active && pull > 60) { haptic(); loadAll(); toast('Osvježavam…', 1000); } ptr.style.height = '0'; active = false; });
+})();
+
+/* ═════════ RENDER ═════════ */
+function renderAll() {
+  setSync();
+  const act = D.orders.filter(o => !done(o)).length, b = $('#tbadge');
+  b.style.display = act ? '' : 'none'; b.textContent = act;
+  renderView(tab);
+}
+function renderView(t) {
+  $('#title').textContent = TITLES[t];
+  ({ home: renderHome, orders: renderOrders, board: renderBoard, report: renderReport, stock: renderStock })[t]();
+}
+
+/* ── POČETNA ── */
+function renderHome() {
+  const h = new Date().getHours();
+  $('#subtitle').textContent = (h < 12 ? 'Dobro jutro' : h < 18 ? 'Dobar dan' : 'Dobra večer') + ' · ' + new Date().toLocaleDateString('hr-HR', { weekday: 'long', day: 'numeric', month: 'long' });
+  if (!D.orders.length && loading) { $('#v-home').innerHTML = '<div class="sec">' + '<div class="skel"></div>'.repeat(5) + '</div>'; return; }
+  const c = k => D.orders.filter(QF[k].f);
+  const unpaid = c('neplaceno'), unpaidSum = unpaid.reduce((s, o) => s + num(o.cijena), 0);
+  const tile = (k, l, v, s, cls) => '<button class="kpi" data-qf="' + k + '"><span class="chev">›</span><div class="l">' + l + '</div><div class="v ' + (cls || '') + '">' + v + '</div><div class="s">' + s + '</div></button>';
+  const late = c('kasni'), soon = c('uskoro');
+  let html = '<div class="sec" style="margin-top:6px"><div class="kpis">'
+    + tile('aktivne', 'Aktivne', c('aktivne').length, 'narudžbi u tijeku')
+    + tile('neplaceno', 'Neplaćeno', eur(unpaidSum), unpaid.length + ' narudžbi', unpaid.length ? 'red' : '')
+    + tile('kasni', 'Kasni', late.length, 'rok prošao', late.length ? 'red' : 'green')
+    + tile('uskoro', 'Rok ≤ 3 dana', soon.length, 'nije poslano', soon.length ? 'amber' : '')
+    + tile('print', 'Čeka print', c('print').length, 'okviri za HS')
+    + tile('izrada', 'Za izradu', c('izrada').length, 'print poslan / u izradi')
+    + tile('zaposlati', 'Za poslati', c('zaposlati').length, 'završeno, nije poslano', c('zaposlati').length ? 'blue' : '')
+    + tile('paketomat', 'U paketomatu', c('paketomat').length, c('dostava').length + ' u dostavi')
+    + '</div></div>';
+  // ovaj mjesec
+  const now = new Date(), mk = ymKey(now), pm = ymKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+  const m = monthStats(mk), p = monthStats(pm);
+  html += '<div class="sec"><div class="sec-h"><h2>' + MJ[now.getMonth()][0].toUpperCase() + MJ[now.getMonth()].slice(1) + '</h2><a onclick="go(\'report\')">Izvještaj ›</a></div><div class="card pad"><div class="grid3">'
+    + '<div class="mini"><div class="v">' + eur(m.rev) + '</div><div class="l">prihod ' + delta(m.rev, p.rev) + '</div></div>'
+    + '<div class="mini"><div class="v">' + eur(m.profit) + '</div><div class="l">zarada</div></div>'
+    + '<div class="mini"><div class="v">' + m.n + '</div><div class="l">narudžbi ' + delta(m.n, p.n) + '</div></div>'
+    + '</div><div class="note">Prošli mjesec: ' + eur(p.rev) + ' · ' + p.n + ' narudžbi' + (adsFor(mk) ? ' · oglasi ovaj mj. ' + eur(adsFor(mk)) : '') + '</div></div></div>';
+  // hitno
+  const urgent = D.orders.filter(o => isLate(o) || QF.uskoro.f(o)).sort(byRok);
+  html += '<div class="sec"><div class="sec-h"><h2>Hitno</h2>' + (urgent.length > 6 ? '<a data-qf="kasni">Sve ›</a>' : '') + '</div>'
+    + (urgent.length ? '<div class="card">' + urgent.slice(0, 6).map(orderRow).join('') + '</div>' : '<div class="card empty">✅ Ništa ne kasni</div>') + '</div>';
+  // skladište
+  const buy = D.stanje.filter(s => s.treba_kupiti > 0), wait = D.stanje.filter(s => s.slobodno < 0 && !(s.treba_kupiti > 0));
+  const putuje = D.nabava.filter(n => n.status === 'Naručeno' || n.status === 'Poslano');
+  html += '<div class="sec"><div class="sec-h"><h2>Skladište</h2><a onclick="go(\'stock\')">Otvori ›</a></div><div class="card">'
+    + (buy.length ? buy.map(s => '<div class="row"><div class="av" style="background:var(--redBg);color:var(--red)">!</div><div class="rm"><div class="rt"><b>' + esc(s.vozac) + ' ' + esc(s.godina) + '</b><span class="price" style="color:var(--red)">kupiti ' + s.treba_kupiti + '</span></div><div class="rs">rezervirano ' + s.rezervirano + ' · na zalihi ' + s.na_zalihi + '</div></div></div>').join('') : '<div class="row"><div class="av" style="background:var(--greenBg);color:var(--green)">✓</div><div class="rm"><b>Svi bolidi su pokriveni</b><div class="rs">' + (wait.length ? wait.length + ' čeka dostavu' : 'zaliha je dovoljna') + '</div></div></div>')
+    + '<div class="row" onclick="go(\'stock\');stockSeg=\'nabava\';renderStock()"><div class="av" style="background:var(--blueBg);color:var(--blue)">🚚</div><div class="rm"><b>Na putu: ' + putuje.reduce((s, n) => s + (n.kolicina || 1), 0) + ' kom</b><div class="rs">' + esc([...new Set(putuje.map(n => n.dobavljac))].join(', ') || 'ništa nije na putu') + '</div></div></div>'
+    + '</div></div>';
+  html += '<div class="note" style="text-align:center;margin:18px">Zadnje osvježeno ' + (lastSync ? new Date(lastSync).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' }) : '—') + ' · MaurOS ' + VERSION + '</div>';
+  $('#v-home').innerHTML = html;
+  $('#v-home').querySelectorAll('[data-qf]').forEach(b => b.addEventListener('click', () => { haptic(); qfSheet(b.dataset.qf); }));
+}
+function qfSheet(k) {
+  const list = D.orders.filter(QF[k].f).sort(byRok);
+  const sum = list.reduce((s, o) => s + num(o.cijena), 0);
+  openSheet(QF[k].l + ' · ' + list.length, '<div class="note" style="margin:0 18px 8px">Ukupno ' + eur2(sum) + '</div>'
+    + (list.length ? list.map(orderRow).join('') : '<div class="empty">Nema narudžbi</div>')
+    + '<div style="padding:12px 16px"><button class="btn ghost" id="toOrders">Otvori u Narudžbama</button></div>',
+    b => b.querySelector('#toOrders').addEventListener('click', () => { OS.qf = k; OS.status = 'sve'; closeTop(); go('orders'); renderOrders(); }));
+}
+function delta(a, b) { if (!b) return ''; const p = Math.round((a - b) / b * 100); return '<span class="delta ' + (p >= 0 ? 'up' : 'dn') + '">' + (p >= 0 ? '+' : '') + p + '%</span>'; }
+function costOf(o) { return num(o.cost); }
+function monthStats(k) {
+  const l = D.orders.filter(o => o.status !== 'Otkazano' && created(o) && ymKey(created(o)) === k);
+  const rev = l.reduce((s, o) => s + num(o.cijena), 0);
+  const profit = l.filter(o => costOf(o) > 0).reduce((s, o) => s + num(o.cijena) - costOf(o), 0);
+  return { n: l.length, rev, profit };
+}
+const adsFor = k => D.ads.filter(a => a.month === k).reduce((s, a) => s + num(a.amount), 0);
+
+/* ── NARUDŽBE ── */
+const OS = { q: '', status: 'aktivne', qf: null, sort: 'rok', limit: 120 };
+function renderOrders() {
+  const v = $('#v-orders');
+  $('#subtitle').textContent = D.orders.length + ' ukupno · ' + D.orders.filter(o => !done(o)).length + ' aktivnih';
+  if (!v.querySelector('.search')) {
+    v.innerHTML = '<div class="search"><span>🔍</span><input id="oq" type="search" placeholder="Kupac, vozač, staza, tracking…" autocomplete="off"></div>'
+      + '<div class="hscroll" id="ostat"></div><div class="hscroll" id="oqf"></div><div id="olist"></div>';
+    $('#oq').addEventListener('input', e => { OS.q = e.target.value.toLowerCase(); OS.limit = 120; drawOrderList(); });
+  }
+  const cnt = s => D.orders.filter(o => o.status === s).length;
+  $('#ostat').innerHTML = [['aktivne', 'Aktivne', D.orders.filter(o => !done(o)).length], ...ST.map(s => [s, s, cnt(s)]), ['sve', 'Sve', D.orders.length]]
+    .map(([k, l, n]) => '<button class="chip' + (OS.status === k ? ' on' : '') + '" data-s="' + esc(k) + '">' + esc(l) + '<span class="n">' + n + '</span></button>').join('');
+  $('#oqf').innerHTML = '<button class="chip' + (OS.sort === 'rok' ? ' on' : '') + '" data-sort="rok">↕ Po roku</button><button class="chip' + (OS.sort === 'new' ? ' on' : '') + '" data-sort="new">↕ Najnovije</button>'
+    + Object.keys(QF).filter(k => k !== 'aktivne').map(k => { const n = D.orders.filter(QF[k].f).length; return n ? '<button class="chip' + (OS.qf === k ? ' on' : '') + '" data-qf2="' + k + '">' + QF[k].l + '<span class="n">' + n + '</span></button>' : ''; }).join('');
+  $('#ostat').onclick = e => { const b = e.target.closest('[data-s]'); if (!b) return; haptic(); OS.status = b.dataset.s; OS.limit = 120; renderOrders(); };
+  $('#oqf').onclick = e => { const b = e.target.closest('button'); if (!b) return; haptic(); if (b.dataset.sort) OS.sort = b.dataset.sort; if (b.dataset.qf2) OS.qf = OS.qf === b.dataset.qf2 ? null : b.dataset.qf2; OS.limit = 120; renderOrders(); };
+  drawOrderList();
+}
+function drawOrderList() {
+  let l = D.orders.filter(o => OS.status === 'sve' ? true : OS.status === 'aktivne' ? !done(o) : o.status === OS.status);
+  if (OS.qf) l = l.filter(QF[OS.qf].f);
+  if (OS.q) l = l.filter(o => [o.fullname, o.name, o.vozac, o.staza, o.godina, o.okvir, o.tracking, o.tel, o.email, o.grad, o.note, o.kuglice, o.privjesci, o.boxnow].join(' ').toLowerCase().includes(OS.q));
+  l.sort(OS.sort === 'rok' ? byRok : (a, b) => (created(b) || 0) - (created(a) || 0));
+  const sum = l.reduce((s, o) => s + num(o.cijena), 0);
+  $('#olist').innerHTML = '<div class="note" style="margin:0 20px 8px">' + l.length + ' narudžbi · ' + eur2(sum) + (OS.qf ? ' · filter: ' + QF[OS.qf].l : '') + '</div>'
+    + (l.length ? '<div class="sec" style="margin-top:0"><div class="card">' + l.slice(0, OS.limit).map(orderRow).join('') + '</div>'
+      + (l.length > OS.limit ? '<button class="more" onclick="OS.limit+=150;drawOrderList()">Prikaži još (' + (l.length - OS.limit) + ')</button>' : '') + '</div>'
+      : '<div class="empty">Nema narudžbi za ovaj filter</div>');
+}
+
+/* ── DETALJ NARUDŽBE ── */
+function openOrder(id) {
+  const o = D.orders.find(x => String(x.id) === String(id)); if (!o) return;
+  const el = openScreen('<div class="shdr"><button class="back" onclick="closeTop()">‹ Natrag</button><div class="t"></div><button class="back" data-edit>Uredi</button></div><div class="sbody"></div>');
+  el.dataset.id = String(id);
+  el.querySelector('[data-edit]').addEventListener('click', () => openForm(id));
+  drawOrder(el);
+}
+function refreshOpenScreens() { document.querySelectorAll('.screen[data-id]').forEach(drawOrder); }
+function drawOrder(el) {
+  const o = D.orders.find(x => String(x.id) === el.dataset.id); if (!o) return;
+  const kv = (k, v, mono, extra) => v ? '<div class="kv"><span class="k">' + k + '</span><span class="vv' + (mono ? ' mono' : '') + '">' + esc(v) + (extra || '') + '</span></div>' : '';
+  const card = (t, rows) => rows ? '<div class="sec"><div class="sec-h"><h2>' + t + '</h2></div><div class="card">' + rows + '</div></div>' : '';
+  const r = rokInfo(o), profit = costOf(o) > 0 ? num(o.cijena) - costOf(o) : null;
+  const bnTxt = o.boxnow_status ? (BN[bn(o)] || [o.boxnow_status])[0] + (o.boxnow_updated_at ? ' · ' + new Date(o.boxnow_updated_at).toLocaleString('hr-HR', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) : '') : '';
+  const tel = String(o.tel || '').replace(/[^\d+]/g, '');
+  el.querySelector('.t').textContent = oname(o);
+  el.querySelector('.sbody').innerHTML =
+    '<div class="hero"><h2>' + esc(oname(o)) + '</h2><div class="p">' + esc(prod(o)) + (o.vozac ? ' · ' + esc(o.vozac) : '') + (o.staza ? ' · ' + esc(short(o.staza)) : '') + (o.godina ? ' ' + esc(o.godina) : '') + '</div>'
+    + '<div class="pills">' + stPill(o) + rokPill(o) + bnPill(o) + (o.paid === 'Da' ? pill('Plaćeno', 'green') : pill('Neplaćeno', 'red')) + (isFrame(o) && o.hs_print === 'Da' ? pill('🖨 HS', 'green') : '') + '</div></div>'
+    + '<div class="actions">'
+    + '<button class="act" data-a="status"><span class="i">🔄</span>Status</button>'
+    + '<button class="act" data-a="paid"><span class="i">' + (o.paid === 'Da' ? '💶' : '💸') + '</span>' + (o.paid === 'Da' ? 'Plaćeno' : 'Označi plaćeno') + '</button>'
+    + (tel ? '<a class="act" href="tel:' + esc(tel) + '"><span class="i">📞</span>Nazovi</a>' : '<button class="act" disabled style="opacity:.4"><span class="i">📞</span>Nema tel.</button>')
+    + '<button class="act" data-a="copy"><span class="i">📋</span>' + (o.tracking ? 'Tracking' : 'Kopiraj') + '</button>'
+    + '</div>'
+    + card('Proizvod', kv('Proizvod', prod(o)) + kv('Vozač', o.vozac) + kv('Staza', o.staza) + kv('Godina', o.godina) + kv('Tekst', o.tekst) + kv('Posveta', o.posveta === 'Da' ? (o.posveta_tekst || 'Da') : '') + kv('Kuglice', o.kuglice) + kv('Privjesci', o.privjesci) + kv('Stanje bolida', o.bolid_stanje))
+    + card('Kupac', kv('Ime', o.fullname) + kv('Profil', o.name) + kv('Platforma', o.platform) + kv('Mobitel', o.tel) + kv('E-mail', o.email))
+    + card('Dostava', kv('Rok isporuke', r ? fmtD(r.d) + (shipped(o) ? '' : r.diff < 0 ? ' (kasni ' + (-r.diff) + 'd)' : ' (za ' + r.diff + 'd)') : '') + kv('Paketomat', o.boxnow) + kv('BOX NOW ID', o.tracking, true, o.tracking ? ' <span class="copy" data-copy="' + esc(o.tracking) + '">kopiraj</span>' : '') + kv('BOX NOW status', bnTxt) + kv('Primatelj', o.dostava_ime) + kv('Adresa', o.adresa || [o.ulica, o.pbr, o.grad].filter(Boolean).join(', ')))
+    + card('Financije', kv('Cijena', o.cijena ? eur2(o.cijena) : '') + kv('Trošak', costOf(o) ? eur2(costOf(o)) : '') + kv('Zarada', profit != null ? eur2(profit) + ' (' + Math.round(profit / Math.max(1, num(o.cijena)) * 100) + '%)' : '') + kv('Plaćeno', o.paid))
+    + card('Napomene', kv('Napomena', o.note) + kv('Interno', o.priv_note))
+    + card('Povijest', kv('Kreirano', o.created) + kv('HS print', isFrame(o) ? (o.hs_print || 'Ne') : '') + kv('ID', o.id, true))
+    + '<div class="note" style="text-align:center;margin:16px">Povuci udesno za natrag</div>';
+  el.querySelector('.sbody').onclick = e => {
+    const c = e.target.closest('[data-copy]'); if (c) { copy(c.dataset.copy); return; }
+    const a = e.target.closest('[data-a]'); if (!a) return; haptic();
+    if (a.dataset.a === 'status') statusSheet(o.id);
+    if (a.dataset.a === 'paid') { const to = o.paid === 'Da' ? 'Ne' : 'Da'; if (confirm(to === 'Da' ? 'Označiti kao PLAĆENO?' : 'Vratiti na NEPLAĆENO?')) { patchOrder(o.id, { paid: to }); toast(to === 'Da' ? '✅ Plaćeno' : 'Neplaćeno'); } }
+    if (a.dataset.a === 'copy') copy(o.tracking || [oname(o), prod(o), o.vozac, o.staza, o.godina, o.boxnow].filter(Boolean).join(' · '));
+  };
+}
+function copy(t) { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('📋 Kopirano'), () => prompt('Kopiraj:', t)); }
+function statusSheet(id) {
+  const o = D.orders.find(x => String(x.id) === String(id)); if (!o) return;
+  openSheet('Status · ' + oname(o), ST.map(s => '<button class="opt' + (o.status === s ? ' sel' : '') + '" data-st="' + esc(s) + '"><span class="sw" style="background:' + STHEX[s] + '"></span>' + esc(s) + (o.status === s ? '<span class="ck">✓</span>' : '') + '</button>').join(''),
+    b => b.addEventListener('click', e => {
+      const x = e.target.closest('[data-st]'); if (!x) return; const s = x.dataset.st; haptic();
+      if (s !== o.status) { const p = { status: s }; if (s === 'Print poslan' && isFrame(o) && o.hs_print !== 'Da') p.hs_print = 'Da'; patchOrder(o.id, p); toast('Status: ' + s); }
+      closeTop();
+    }));
+}
+// sinkronizacija svih otvorenih prikaza nakon izmjene
+const _renderAll = renderAll;
+renderAll = function () { _renderAll(); refreshOpenScreens(); };
+
+/* ── OBRAZAC (nova / uredi) ── */
+const FIELDS = [
+  ['Kupac', [['fullname', 'Ime i prezime'], ['name', 'Profil / nadimak'], ['platform', 'Platforma', 'sel', ['Instagram', 'Facebook', 'TikTok', 'Osobno', 'Preporuka']], ['tel', 'Mobitel', 'tel'], ['email', 'E-mail', 'email']]],
+  ['Proizvod', [['okvir', 'Proizvod', 'sel', Object.keys(OKV)], ['vozac', 'Vozač', 'list:vozaci'], ['staza', 'Staza', 'list:staze'], ['godina', 'Godina', 'num'], ['tekst', 'Tekst na okviru'], ['posveta', 'Posveta', 'sel', ['Ne', 'Da']], ['posveta_tekst', 'Tekst posvete', 'area'], ['kuglice', 'Kuglice (npr. 1x Max Verstappen (VER))'], ['privjesci', 'Privjesci']]],
+  ['Status i rok', [['status', 'Status', 'sel', ST], ['paid', 'Plaćeno', 'sel', ['Ne', 'Da']], ['rok_isporuke', 'Rok isporuke', 'date'], ['hs_print', 'HS print', 'sel', ['Ne', 'Da']]]],
+  ['Dostava', [['boxnow', 'Paketomat (#ID adresa)'], ['boxnow_locker_id', 'ID paketomata', 'num'], ['tracking', 'BOX NOW ID / tracking'], ['dostava_ime', 'Primatelj'], ['ulica', 'Ulica'], ['grad', 'Grad'], ['pbr', 'Poštanski broj', 'num']]],
+  ['Financije', [['cijena', 'Cijena €', 'dec'], ['cost_bolid', 'Trošak bolid', 'dec'], ['cost_okvir', 'Trošak okvir', 'dec'], ['cost_print', 'Trošak print', 'dec'], ['cost_pakiranje', 'Pakiranje', 'dec'], ['cost_dostava', 'Dostava', 'dec'], ['cost_3dmat', '3D materijal', 'dec'], ['cost_kuglica', 'Kuglica', 'dec'], ['cost_privjesak', 'Privjesak', 'dec'], ['cost_kal', 'Kalendar', 'dec'], ['cost_lego', 'Lego', 'dec'], ['cost_folija', 'Ostalo', 'dec']]],
+  ['Napomene', [['note', 'Napomena', 'area'], ['priv_note', 'Interna napomena', 'area']]]
+];
+const COSTS = ['cost_bolid', 'cost_okvir', 'cost_print', 'cost_pakiranje', 'cost_dostava', 'cost_3dmat', 'cost_kuglica', 'cost_privjesak', 'cost_kal', 'cost_lego', 'cost_folija'];
+function openForm(id) {
+  const o = id ? D.orders.find(x => String(x.id) === String(id)) : null;
+  const orig = o ? Object.assign({}, o) : { status: 'Novo', paid: 'Ne', platform: 'Instagram', okvir: 'F1 okvir vozac i staza', posveta: 'Ne', hs_print: 'Ne' };
+  const uniq = k => [...new Set(D.orders.map(x => x[k]).filter(Boolean))].sort();
+  const val = k => orig[k] == null ? '' : String(orig[k]);
+  const inp = ([k, l, t, opts]) => {
+    let c;
+    if (t === 'sel') c = '<select name="' + k + '">' + (opts.includes(val(k)) || !val(k) ? '' : '<option>' + esc(val(k)) + '</option>') + opts.map(x => '<option' + (val(k) === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>';
+    else if (t === 'area') c = '<textarea name="' + k + '">' + esc(val(k)) + '</textarea>';
+    else if (t && t.startsWith('list:')) c = '<input name="' + k + '" list="dl-' + k + '" value="' + esc(val(k)) + '" autocomplete="off"><datalist id="dl-' + k + '">' + uniq(k).map(x => '<option value="' + esc(x) + '">').join('') + '</datalist>';
+    else c = '<input name="' + k + '" value="' + esc(val(k)) + '"' + (t === 'tel' ? ' type="tel"' : t === 'email' ? ' type="email"' : t === 'date' ? ' type="date"' : t === 'num' ? ' inputmode="numeric"' : t === 'dec' ? ' inputmode="decimal"' : '') + '>';
+    return '<div class="field"><label>' + esc(l) + '</label>' + c + '</div>';
+  };
+  const html = '<div class="shdr"><button class="back" onclick="closeTop()">‹ Odustani</button><div class="t">' + (o ? 'Uredi narudžbu' : 'Nova narudžba') + '</div></div><div class="sbody">'
+    + FIELDS.map(([g, fs]) => '<div class="fgroup"><h3>' + g + '</h3><div class="card">' + fs.map(inp).join('') + '</div></div>').join('')
+    + '<div class="note" style="margin:14px 20px">Spremaju se samo polja koja promijeniš. Ništa se ne briše.</div></div>'
+    + '<div class="savebar"><button class="btn" data-save>' + (o ? 'Spremi izmjene' : 'Dodaj narudžbu') + '</button></div>';
+  openScreen(html, el => el.querySelector('[data-save]').addEventListener('click', () => {
+    const f = {}; el.querySelectorAll('[name]').forEach(i => f[i.name] = i.value.trim());
+    if (!f.fullname && !f.name) { toast('Upiši ime kupca'); return; }
+    if (!f.okvir) { toast('Odaberi proizvod'); return; }
+    if (o) {
+      const patch = {};
+      Object.keys(f).forEach(k => { if (f[k] !== (o[k] == null ? '' : String(o[k]))) patch[k] = f[k] === '' ? null : f[k]; });
+      if (COSTS.some(k => k in patch)) patch.cost = COSTS.reduce((s, k) => s + num(k in patch ? patch[k] : o[k]), 0).toFixed(2);
+      if (('ulica' in patch) || ('grad' in patch) || ('pbr' in patch)) patch.adresa = [f.ulica, f.pbr, f.grad].filter(Boolean).join(', ');
+      if (!Object.keys(patch).length) { closeTop(); return; }
+      patchOrder(o.id, patch); toast('✅ Spremljeno (' + Object.keys(patch).length + ' polja)');
+    } else {
+      const row = {}; Object.keys(f).forEach(k => { if (f[k] !== '') row[k] = f[k]; });
+      row.id = String(Date.now());
+      const d = new Date(); row.created = d.getDate() + '. ' + String(d.getMonth() + 1).padStart(2, '0') + '. ' + d.getFullYear() + '.';
+      const c = COSTS.reduce((s, k) => s + num(row[k]), 0); if (c) row.cost = c.toFixed(2);
+      if (row.ulica || row.grad) row.adresa = [row.ulica, row.pbr, row.grad].filter(Boolean).join(', ');
+      enqueue({ kind: 'insert', table: 'orders', id: row.id, row }); toast('✅ Narudžba dodana');
+    }
+    haptic(); closeTop();
+  }));
+}
+
+/* ── PLOČA ── */
+const BCOLS = ST;
+let bIdx = 0;
+function renderBoard() {
+  const v = $('#v-board');
+  $('#subtitle').textContent = 'Povuci lijevo/desno · drži karticu za status';
+  const cols = BCOLS.map(s => {
+    let l = D.orders.filter(o => o.status === s);
+    l.sort(s === 'Isporučeno' || s === 'Poslano' ? (a, b) => (created(b) || 0) - (created(a) || 0) : byRok);
+    return { s, l, all: l.length };
+  });
+  const keepScroll = $('#btrack') ? $('#btrack').scrollLeft : null;
+  v.innerHTML = '<div id="bchips" class="hscroll">' + cols.map((c, i) => '<button class="chip' + (i === bIdx ? ' on' : '') + '" data-i="' + i + '"><span style="color:' + STHEX[c.s] + '">●</span> ' + esc(c.s) + '<span class="n">' + c.all + '</span></button>').join('') + '</div>'
+    + '<div class="pager">' + cols.map((c, i) => '<i class="' + (i === bIdx ? 'on' : '') + '"></i>').join('') + '</div>'
+    + '<div id="btrack">' + cols.map(c => {
+      const lim = (c.s === 'Isporučeno') ? 40 : 400;
+      return '<div class="bcol"><div class="bhead"><span style="color:' + STHEX[c.s] + '">●</span>' + esc(c.s) + '<span class="cnt">' + c.all + ' · ' + eur(c.l.reduce((s, o) => s + num(o.cijena), 0)) + '</span></div>'
+        + (c.l.length ? c.l.slice(0, lim).map(bcard).join('') + (c.all > lim ? '<div class="note" style="text-align:center">+ još ' + (c.all - lim) + ' (vidi Narudžbe)</div>' : '') : '<div class="empty">Prazno</div>') + '</div>';
+    }).join('') + '</div>';
+  const tr = $('#btrack');
+  if (keepScroll != null) tr.scrollLeft = keepScroll; else tr.scrollLeft = bIdx * tr.clientWidth;
+  let t; tr.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => { const i = Math.round(tr.scrollLeft / tr.clientWidth); if (i !== bIdx) { bIdx = i; markBoard(); } }, 60); }, { passive: true });
+  $('#bchips').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (!b) return; haptic(); bIdx = +b.dataset.i; tr.scrollTo({ left: bIdx * tr.clientWidth, behavior: 'smooth' }); markBoard(); });
+  // dugi pritisak = promjena statusa
+  let lp, moved;
+  tr.addEventListener('touchstart', e => { const c = e.target.closest('[data-card]'); moved = false; if (!c) return; lp = setTimeout(() => { if (!moved) { haptic(); c._lp = true; statusSheet(c.dataset.card); } }, 480); }, { passive: true });
+  tr.addEventListener('touchmove', () => { moved = true; clearTimeout(lp); }, { passive: true });
+  tr.addEventListener('touchend', () => clearTimeout(lp));
+  tr.addEventListener('click', e => {
+    const m = e.target.closest('[data-move]'); if (m) { e.stopPropagation(); haptic(); statusSheet(m.dataset.move); return; }
+    const c = e.target.closest('[data-card]'); if (!c) return; if (c._lp) { c._lp = false; return; } haptic(); openOrder(c.dataset.card);
+  });
+}
+function markBoard() {
+  document.querySelectorAll('#bchips .chip').forEach((c, i) => c.classList.toggle('on', i === bIdx));
+  document.querySelectorAll('.pager i').forEach((c, i) => c.classList.toggle('on', i === bIdx));
+  const on = document.querySelector('#bchips .chip.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+}
+function bcard(o) {
+  const sub = [o.vozac, short(o.staza), o.godina].filter(Boolean).join(' · ') || o.kuglice || o.privjesci || '';
+  return '<div class="bcard" data-card="' + esc(o.id) + '" role="button"><button class="more-btn" data-move="' + esc(o.id) + '" aria-label="Status">⋯</button>'
+    + '<div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)">' + esc(prod(o)) + '</div>'
+    + '<div style="font-weight:650;font-size:15px;margin-top:2px;padding-right:30px">' + esc(oname(o)) + '</div>'
+    + (sub ? '<div class="rs">' + esc(sub) + '</div>' : '')
+    + '<div class="pills"><span class="pill">' + eur2(o.cijena) + '</span>' + rokPill(o) + bnPill(o) + paidPill(o) + (isFrame(o) && o.hs_print === 'Da' && o.status === 'Novo' ? pill('🖨 HS') : '') + '</div></div>';
+}
+
+/* ── SKLADIŠTE ── */
+let stockSeg = 'bolidi', stockQ = '';
+function renderStock() {
+  const v = $('#v-stock');
+  const buy = D.stanje.filter(s => s.treba_kupiti > 0).length, put = D.nabava.filter(n => n.status === 'Naručeno' || n.status === 'Poslano');
+  $('#subtitle').textContent = (buy ? buy + ' za kupiti · ' : 'sve pokriveno · ') + put.reduce((s, n) => s + (n.kolicina || 1), 0) + ' kom na putu';
+  let html = '<div class="seg">' + [['bolidi', 'Bolidi'], ['nabava', 'Nabava'], ['zaliha', 'Zaliha']].map(([k, l]) => '<button class="' + (stockSeg === k ? 'on' : '') + '" data-seg="' + k + '">' + l + '</button>').join('') + '</div>';
+  if (stockSeg === 'bolidi') {
+    const l = D.stanje.filter(s => !stockQ || (s.vozac + ' ' + s.godina).toLowerCase().includes(stockQ))
+      .sort((a, b) => (b.treba_kupiti - a.treba_kupiti) || (a.slobodno - b.slobodno) || String(a.vozac).localeCompare(b.vozac));
+    html += '<div class="search"><span>🔍</span><input id="sq" type="search" placeholder="Vozač ili godina" value="' + esc(stockQ) + '"></div>'
+      + '<div class="sec" style="margin-top:0"><div class="card">' + (l.length ? l.map(s => {
+        const st = s.treba_kupiti > 0 ? ['KUPITI ' + s.treba_kupiti, 'red'] : s.slobodno < 0 ? ['čeka dostavu', 'amber'] : s.slobodno === 0 && s.rezervirano ? ['sve rezervirano', 'amber'] : ['slobodno ' + s.slobodno, 'green'];
+        return '<div class="row"><div class="av" style="background:var(--' + st[1] + 'Bg);color:var(--' + st[1] + ')">' + (s.slobodno > 0 ? s.slobodno : s.treba_kupiti > 0 ? '!' : s.slobodno) + '</div><div class="rm"><div class="rt"><b>' + esc(s.vozac) + '</b><span class="price">' + esc(s.godina) + '</span></div>'
+          + '<div class="pills">' + pill(st[0], st[1]) + pill('zaliha ' + s.na_zalihi) + pill('rezerv. ' + s.rezervirano) + (s.na_putu ? pill('🚚 ' + s.na_putu + (s.eta ? ' · ' + new Date(s.eta).toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric' }) : ''), 'blue') : '') + '</div></div></div>';
+      }).join('') : '<div class="empty">Nema podataka</div>') + '</div></div>';
+  } else if (stockSeg === 'nabava') {
+    const act = D.nabava.filter(n => n.status !== 'Stiglo' && n.status !== 'Otkazano'), old = D.nabava.filter(n => n.status === 'Stiglo').slice(0, 30);
+    const grp = {}; act.forEach(n => { const k = n.dobavljac + ' · ' + (n.narudzba_br || ''); (grp[k] = grp[k] || []).push(n); });
+    html += Object.keys(grp).length ? Object.entries(grp).map(([k, l]) => {
+      const n0 = l[0], tr = n0.tracking, eta = n0.eta_od ? new Date(n0.eta_od).toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric' }) + (n0.eta_do && n0.eta_do !== n0.eta_od ? '–' + new Date(n0.eta_do).toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric' }) : '') : 'bez ETA';
+      return '<div class="sec"><div class="sec-h"><h2 style="font-size:15px">' + esc(k) + '</h2><span class="pill p-' + (n0.status === 'Poslano' ? 'blue' : 'amber') + '">' + esc(n0.status) + '</span></div><div class="card">'
+        + '<div class="kv"><span class="k">Dolazak</span><span class="vv">' + esc(eta) + '</span></div>'
+        + (tr ? '<div class="kv"><span class="k">Tracking</span><span class="vv mono">' + esc(tr) + ' <span class="copy" data-copy="' + esc(tr) + '">kopiraj</span> <a class="copy" target="_blank" rel="noopener" href="' + trackUrl(tr, n0.kurir) + '">prati ›</a></span></div>' : '')
+        + l.map(n => '<div class="row"><div class="av" style="background:var(--card2)">' + (n.kolicina || 1) + '×</div><div class="rm"><b style="font-size:14px">' + esc(n.opis || (n.vozac + ' ' + n.godina)) + '</b><div class="rs">' + esc([n.vozac, n.godina, n.cijena ? eur2(n.cijena) : '', n.note].filter(Boolean).join(' · ')) + '</div></div>'
+          + '<button class="pill p-green" data-arrived="' + n.id + '" style="align-self:center">Stiglo ✓</button></div>').join('')
+        + '</div></div>';
+    }).join('') : '<div class="empty">Ništa nije na putu</div>';
+    if (old.length) html += '<div class="sec"><div class="sec-h"><h2>Stiglo</h2></div><div class="card">' + old.map(n => '<div class="row"><div class="av" style="background:var(--greenBg);color:var(--green)">✓</div><div class="rm"><b style="font-size:14px">' + esc(n.opis || n.vozac) + '</b><div class="rs">' + esc([n.dobavljac, (n.kolicina || 1) + ' kom', n.stiglo_at ? new Date(n.stiglo_at).toLocaleDateString('hr-HR') : ''].filter(Boolean).join(' · ')) + '</div></div></div>').join('') + '</div></div>';
+    html += '<div class="note" style="margin:14px 20px">Narudžbe dobavljača i tracking upisuje Claude iz Gmaila u jutarnjoj obradi.</div>';
+  } else {
+    const groups = { bolid: 'Bolidi', okvir: 'Okviri', repro: 'Repromaterijal' };
+    const l = D.stock.filter(s => s.active !== false || s.qty);
+    html += Object.entries(groups).map(([t, lab]) => {
+      const items = l.filter(s => s.type === t).sort((a, b) => String(a.vozac || a.name).localeCompare(b.vozac || b.name) || String(a.godina).localeCompare(b.godina));
+      if (!items.length) return '';
+      return '<div class="sec"><div class="sec-h"><h2>' + lab + '</h2><span class="note" style="margin:0">' + items.reduce((s, x) => s + (x.qty || 0), 0) + ' kom</span></div><div class="card">' + items.map(s => {
+        const low = s.min && s.qty <= s.min;
+        return '<div class="row"><div class="rm"><b style="font-size:14px">' + esc(t === 'bolid' ? (s.vozac + ' ' + s.godina) : s.name) + '</b><div class="rs">' + esc([s.name && t === 'bolid' ? s.name : '', s.marka, s.supplier].filter(Boolean).join(' · ')) + '</div></div>'
+          + '<div style="display:flex;align-items:center;gap:6px"><button class="iconbtn" data-q="-1" data-sid="' + esc(s.id) + '">−</button><b style="min-width:26px;text-align:center;font-size:17px;color:' + (s.qty <= 0 ? 'var(--red)' : low ? 'var(--amber)' : 'inherit') + '">' + (s.qty || 0) + '</b><button class="iconbtn" data-q="1" data-sid="' + esc(s.id) + '">+</button></div></div>';
+      }).join('') + '</div></div>';
+    }).join('') || '<div class="empty">Nema stavki</div>';
+  }
+  v.innerHTML = html;
+  v.querySelectorAll('[data-seg]').forEach(b => b.addEventListener('click', () => { haptic(); stockSeg = b.dataset.seg; renderStock(); }));
+  const sq = $('#sq'); if (sq) sq.addEventListener('input', e => { stockQ = e.target.value.toLowerCase(); const p = sq.selectionStart; renderStock(); const n = $('#sq'); n.focus(); n.setSelectionRange(p, p); });
+  v.onclick = e => {
+    const c = e.target.closest('[data-copy]'); if (c) { copy(c.dataset.copy); return; }
+    const a = e.target.closest('[data-arrived]'); if (a) { arrived(+a.dataset.arrived); return; }
+    const q = e.target.closest('[data-q]'); if (q) { haptic(); qtyTap(q.dataset.sid, +q.dataset.q); }
+  };
+}
+function trackUrl(t, kurir) {
+  t = String(t).trim();
+  if (/dhl/i.test(kurir || '') || /^[A-Z]{2}\d{9}DE$/.test(t)) return 'https://www.dhl.com/hr-en/home/tracking/tracking-parcel.html?submit=1&tracking-id=' + encodeURIComponent(t);
+  return 'https://t.17track.net/en#nums=' + encodeURIComponent(t);
+}
+const qtyPend = {};
+function qtyTap(sid, d) {
+  const s = D.stock.find(x => String(x.id) === String(sid)); if (!s) return;
+  if ((s.qty || 0) + d < 0) { toast('Zaliha ne može biti manja od 0'); return; }
+  s.qty = (s.qty || 0) + d; renderStock();
+  clearTimeout(qtyPend[sid]); qtyPend[sid] = setTimeout(() => { enqueue({ kind: 'patch', table: 'stock', id: String(sid), patch: { qty: s.qty } }); toast('Zaliha: ' + (s.vozac ? s.vozac + ' ' + s.godina : s.name) + ' = ' + s.qty); }, 900);
+}
+function arrived(nid) {
+  const n = D.nabava.find(x => x.id === nid); if (!n) return;
+  const st = D.stock.find(s => s.type === 'bolid' && s.vozac === n.vozac && String(s.godina) === String(n.godina));
+  const kol = n.kolicina || 1;
+  if (!confirm('Označiti kao STIGLO?\n\n' + (n.opis || n.vozac) + ' · ' + kol + ' kom' + (st && !n.na_zalihu ? '\n\nZaliha ' + n.vozac + ' ' + n.godina + ': ' + (st.qty || 0) + ' → ' + ((st.qty || 0) + kol) : '\n\n⚠ Nema stavke na zalihi za ovaj bolid – dodaj je ručno (Claude/desktop).'))) return;
+  enqueue({ kind: 'patch', table: 'nabava', id: String(nid), patch: Object.assign({ status: 'Stiglo', stiglo_at: new Date().toISOString() }, st && !n.na_zalihu ? { na_zalihu: true, stock_id: String(st.id) } : {}) });
+  if (st && !n.na_zalihu) enqueue({ kind: 'patch', table: 'stock', id: String(st.id), patch: { qty: (st.qty || 0) + kol } });
+  haptic(); toast('✅ Stiglo' + (st && !n.na_zalihu ? ' · zaliha ' + st.qty : ''));
+  setTimeout(() => loadAll(true), 2500); // osvježi "stanje" (rezervacije) iz baze
+}
+
+/* ── IZVJEŠTAJ ── */
+const RS = { period: 'this_month', okvir: '', platform: '', vozac: '', staza: '', paid: '' };
+function periodRange(p) {
+  const n = new Date(), y = n.getFullYear(), m = n.getMonth();
+  if (p === 'this_month') return [new Date(y, m, 1), new Date(y, m + 1, 1), 'Ovaj mjesec'];
+  if (p === 'last_month') return [new Date(y, m - 1, 1), new Date(y, m, 1), 'Prošli mjesec'];
+  if (p === '3m') return [new Date(y, m - 2, 1), new Date(y, m + 1, 1), 'Zadnja 3 mjeseca'];
+  if (p === '12m') return [new Date(y, m - 11, 1), new Date(y, m + 1, 1), 'Zadnjih 12 mjeseci'];
+  if (p === 'ytd') return [new Date(y, 0, 1), new Date(y + 1, 0, 1), 'Godina ' + y];
+  if (p.startsWith('m:')) { const [yy, mm] = p.slice(2).split('-').map(Number); return [new Date(yy, mm - 1, 1), new Date(yy, mm, 1), MJ[mm - 1] + ' ' + yy]; }
+  if (p.startsWith('y:')) { const yy = +p.slice(2); return [new Date(yy, 0, 1), new Date(yy + 1, 0, 1), 'Godina ' + yy]; }
+  return [new Date(2000, 0, 1), new Date(2100, 0, 1), 'Sve vrijeme'];
+}
+function prevRange(a, b) { const months = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth(); return [new Date(a.getFullYear(), a.getMonth() - months, 1), a]; }
+function repFilter(o) {
+  if (o.status === 'Otkazano') return false;
+  if (RS.okvir && o.okvir !== RS.okvir) return false;
+  if (RS.platform && o.platform !== RS.platform) return false;
+  if (RS.vozac && o.vozac !== RS.vozac) return false;
+  if (RS.staza && o.staza !== RS.staza) return false;
+  if (RS.paid && (o.paid === 'Da' ? 'Da' : 'Ne') !== RS.paid) return false;
+  return true;
+}
+const inRange = (o, a, b) => { const d = created(o); return d && d >= a && d < b; };
+function agg(l) {
+  const rev = l.reduce((s, o) => s + num(o.cijena), 0), wc = l.filter(o => costOf(o) > 0);
+  const cost = wc.reduce((s, o) => s + costOf(o), 0), profit = wc.reduce((s, o) => s + num(o.cijena) - costOf(o), 0), revWc = wc.reduce((s, o) => s + num(o.cijena), 0);
+  return { n: l.length, rev, cost, profit, margin: revWc ? profit / revWc * 100 : 0, aov: l.length ? rev / l.length : 0, noCost: l.length - wc.length, unpaid: l.filter(o => o.paid !== 'Da').reduce((s, o) => s + num(o.cijena), 0) };
+}
+function adsIn(a, b) { return D.ads.filter(x => { const [y, m] = String(x.month).split('-').map(Number); const d = new Date(y, m - 1, 1); return d >= a && d < b; }).reduce((s, x) => s + num(x.amount), 0); }
+function bars(rows, fmt, max) { max = max || Math.max(1, ...rows.map(r => r[1])); return '<div class="bars">' + rows.map(r => '<div class="b"><div class="bl"><span>' + esc(r[0]) + '</span><b>' + fmt(r) + '</b></div><div class="track"><div class="fill" style="width:' + Math.max(2, r[1] / max * 100) + '%;' + (r[3] ? 'background:' + r[3] : '') + '"></div></div></div>').join('') + '</div>'; }
+function groupBy(l, key, top) {
+  const m = {}; l.forEach(o => { const k = typeof key === 'function' ? key(o) : (o[key] || '—'); if (!k) return; (m[k] = m[k] || { n: 0, rev: 0 }); m[k].n++; m[k].rev += num(o.cijena); });
+  return Object.entries(m).sort((a, b) => b[1].n - a[1].n || b[1].rev - a[1].rev).slice(0, top || 99);
+}
+function renderReport() {
+  const v = $('#v-report');
+  const [a, b, label] = periodRange(RS.period);
+  const all = D.orders.filter(repFilter), l = all.filter(o => inRange(o, a, b));
+  const [pa, pb] = prevRange(a, b), pl = RS.period === 'all' ? [] : all.filter(o => inRange(o, pa, pb));
+  const A = agg(l), P = agg(pl), ads = adsIn(a, b), fCount = ['okvir', 'platform', 'vozac', 'staza', 'paid'].filter(k => RS[k]).length;
+  $('#subtitle').textContent = label + ' · ' + A.n + ' narudžbi';
+  const months = [...new Set(D.orders.map(o => created(o)).filter(Boolean).map(ymKey))].sort().reverse();
+  const years = [...new Set(months.map(m => m.slice(0, 4)))];
+  const pchip = (k, l2) => '<button class="chip' + (RS.period === k ? ' on' : '') + '" data-p="' + k + '">' + l2 + '</button>';
+  let html = '<div class="hscroll">' + pchip('this_month', 'Ovaj mj.') + pchip('last_month', 'Prošli mj.') + pchip('3m', '3 mj.') + pchip('12m', '12 mj.') + pchip('ytd', 'Ova god.') + pchip('all', 'Sve') + years.map(y => pchip('y:' + y, y)).join('') + '</div>'
+    + '<div class="hscroll">' + months.map(m => { const [y, mm] = m.split('-'); return pchip('m:' + m, MJS[+mm - 1] + ' ' + y.slice(2)); }).join('') + '</div>'
+    + '<div class="hscroll"><button class="chip' + (fCount ? ' on' : '') + '" id="rfilt">⚙ Filteri' + (fCount ? ' (' + fCount + ')' : '') + '</button>'
+    + (fCount ? '<button class="chip" id="rclear">✕ Očisti</button>' : '') + ['okvir', 'platform', 'vozac', 'staza', 'paid'].filter(k => RS[k]).map(k => '<span class="chip">' + esc(k === 'okvir' ? (OKV[RS[k]] || RS[k]) : k === 'paid' ? 'Plaćeno: ' + RS[k] : RS[k]) + '</span>').join('')
+    + '<button class="chip" id="rcsv">⬇ CSV</button></div>';
+  // KPI
+  const k = (l2, val, sub, cls) => '<div class="kpi"><div class="l">' + l2 + '</div><div class="v ' + (cls || '') + '">' + val + '</div><div class="s">' + sub + '</div></div>';
+  html += '<div class="sec" style="margin-top:4px"><div class="kpis">'
+    + k('Prihod', eur(A.rev), (RS.period !== 'all' ? delta(A.rev, P.rev) + ' vs prije' : 'ukupno'))
+    + k('Narudžbe', A.n, (RS.period !== 'all' ? delta(A.n, P.n) + ' vs prije' : 'ukupno'))
+    + k('Zarada', eur(A.profit), 'marža ' + Math.round(A.margin) + '%', A.profit >= 0 ? 'green' : 'red')
+    + k('Prosj. narudžba', eur(A.aov, 2), 'trošak ' + eur(A.cost))
+    + k('Meta oglasi', eur(ads), A.n ? eur(ads / A.n, 2) + ' po narudžbi' : '—')
+    + k('Zarada − oglasi', eur(A.profit - ads), 'čista zarada', A.profit - ads >= 0 ? 'green' : 'red')
+    + '</div>' + (A.noCost ? '<div class="note">' + A.noCost + ' narudžbi nema upisan trošak – nisu u zaradi/marži.</div>' : '') + '</div>';
+  // trend
+  const tm = []; const end = RS.period.startsWith('m:') || RS.period === 'this_month' || RS.period === 'last_month' ? new Date(b.getFullYear(), b.getMonth() - 1, 1) : new Date(b.getFullYear(), b.getMonth() - 1, 1);
+  const nM = RS.period === 'all' ? Math.min(24, months.length) : Math.max(6, Math.min(24, (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth()));
+  const endM = RS.period === 'all' || RS.period.startsWith('y:') || RS.period === 'ytd' ? new Date(Math.min(b - 1, Date.now())) : end;
+  for (let i = nM - 1; i >= 0; i--) { const d = new Date(endM.getFullYear(), endM.getMonth() - i, 1); const kk = ymKey(d); const ml = all.filter(o => created(o) && ymKey(created(o)) === kk); const g = agg(ml); tm.push({ k: kk, d, rev: g.rev, profit: g.profit, n: g.n, ads: adsIn(d, new Date(d.getFullYear(), d.getMonth() + 1, 1)), sel: d >= a && d < b }); }
+  html += '<div class="sec"><div class="sec-h"><h2>Trend po mjesecima</h2></div><div class="card pad chart">' + trendSvg(tm) + '<div class="legend"><span><i style="background:var(--ink)"></i>prihod</span><span><i style="background:var(--green)"></i>zarada</span><span><i style="background:var(--red)"></i>oglasi</span></div></div></div>';
+  if (!A.n) { v.innerHTML = html + '<div class="empty">Nema narudžbi u ovom razdoblju</div>'; bindReport(v, l); return; }
+  // proizvodi
+  const gp = groupBy(l, o => prod(o));
+  html += '<div class="sec"><div class="sec-h"><h2>Proizvodi</h2></div><div class="card pad">' + bars(gp.map(([n, x]) => [n, x.n, x.rev]), r => r[1] + ' · ' + eur(r[2])) + '</div></div>';
+  // vozači, staze, kombinacije
+  const frames = l.filter(isFrame);
+  html += '<div class="sec"><div class="sec-h"><h2>Top vozači</h2></div><div class="card pad">' + bars(groupBy(frames.filter(o => o.vozac), 'vozac', 10).map(([n, x]) => [n, x.n, x.rev]), r => r[1] + ' · ' + eur(r[2])) + '</div></div>';
+  html += '<div class="sec"><div class="sec-h"><h2>Top staze</h2></div><div class="card pad">' + bars(groupBy(frames.filter(o => o.staza), o => short(o.staza), 10).map(([n, x]) => [n, x.n, x.rev]), r => r[1] + ' · ' + eur(r[2])) + '</div></div>';
+  html += '<div class="sec"><div class="sec-h"><h2>Najtraženije kombinacije</h2></div><div class="card pad">' + bars(groupBy(frames.filter(o => o.vozac && o.staza), o => o.vozac.split(' ').pop() + ' · ' + short(o.staza) + (o.godina ? ' ' + o.godina : ''), 8).map(([n, x]) => [n, x.n, x.rev]), r => r[1] + '×') + '</div></div>';
+  // platforme
+  html += '<div class="sec"><div class="sec-h"><h2>Platforme</h2></div><div class="card pad">' + bars(groupBy(l, 'platform').map(([n, x]) => [n, x.n, x.rev]), r => Math.round(r[1] / A.n * 100) + '% · ' + r[1] + ' · ' + eur(r[2])) + '</div></div>';
+  // dani u tjednu
+  const wd = [0, 0, 0, 0, 0, 0, 0]; l.forEach(o => { const d = created(o); if (d) wd[(d.getDay() + 6) % 7]++; });
+  html += '<div class="sec"><div class="sec-h"><h2>Narudžbe po danima u tjednu</h2></div><div class="card pad">' + bars(['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'].map((n, i) => [n, wd[i]]), r => r[1]) + '</div></div>';
+  // isporuka
+  const del = l.filter(o => bn(o) === 'delivered' && o.boxnow_updated_at), onTime = del.filter(o => { const r = rokInfo(o); return !r || new Date(o.boxnow_updated_at) <= new Date(r.d.getTime() + 864e5); });
+  const lead = del.map(o => (new Date(o.boxnow_updated_at) - created(o)) / 864e5).filter(x => x >= 0 && x < 120);
+  const stNow = ST.map(s => [s, l.filter(o => o.status === s).length, 0, STHEX[s]]).filter(r => r[1]);
+  html += '<div class="sec"><div class="sec-h"><h2>Isporuka</h2></div><div class="card pad"><div class="grid3">'
+    + '<div class="mini"><div class="v">' + del.length + '</div><div class="l">dostavljeno</div></div>'
+    + '<div class="mini"><div class="v">' + (del.length ? Math.round(onTime.length / del.length * 100) + '%' : '—') + '</div><div class="l">na vrijeme</div></div>'
+    + '<div class="mini"><div class="v">' + (lead.length ? Math.round(lead.reduce((s, x) => s + x, 0) / lead.length) + 'd' : '—') + '</div><div class="l">narudžba → dostava</div></div>'
+    + '</div><div style="margin-top:14px">' + bars(stNow, r => r[1]) + '</div></div></div>';
+  // plaćanja i kupci
+  const paidN = l.filter(o => o.paid === 'Da').length;
+  const allTimeCount = {}; D.orders.forEach(o => { const k = String(oname(o)).toLowerCase().trim(); if (!k || k === '—') return; const d = created(o); (allTimeCount[k] = allTimeCount[k] || []).push(d ? d.getTime() : 0); });
+  const custs = [...new Set(l.map(o => String(oname(o)).toLowerCase().trim()))];
+  const returning = custs.filter(c => (allTimeCount[c] || []).some(t => t < a.getTime())).length;
+  const multi = custs.filter(c => l.filter(o => String(oname(o)).toLowerCase().trim() === c).length > 1).length;
+  html += '<div class="sec"><div class="sec-h"><h2>Kupci i plaćanja</h2></div><div class="card pad"><div class="grid3">'
+    + '<div class="mini"><div class="v">' + custs.length + '</div><div class="l">kupaca</div></div>'
+    + '<div class="mini"><div class="v">' + returning + '</div><div class="l">povratnih</div></div>'
+    + '<div class="mini"><div class="v">' + multi + '</div><div class="l">više narudžbi</div></div>'
+    + '</div><div style="margin-top:14px">' + bars([['Plaćeno', paidN, 0, 'var(--green)'], ['Neplaćeno', A.n - paidN, 0, 'var(--red)']], r => r[1] + (r[0] === 'Neplaćeno' && A.unpaid ? ' · ' + eur(A.unpaid) : ''), A.n) + '</div></div></div>';
+  // troškovi
+  const cs = COSTS.map(c => [({ cost_bolid: 'Bolidi', cost_okvir: 'Okviri', cost_print: 'Print', cost_pakiranje: 'Pakiranje', cost_dostava: 'Dostava', cost_3dmat: '3D materijal', cost_kuglica: 'Kuglice', cost_privjesak: 'Privjesci', cost_kal: 'Kalendari', cost_lego: 'Lego', cost_folija: 'Ostalo' })[c], l.reduce((s, o) => s + num(o[c]), 0)]).filter(r => r[1] > 0).sort((x, y) => y[1] - x[1]);
+  if (cs.length || ads) html += '<div class="sec"><div class="sec-h"><h2>Struktura troškova</h2></div><div class="card pad">' + bars(ads ? cs.concat([['Meta oglasi', ads, 0, 'var(--red)']]).sort((x, y) => y[1] - x[1]) : cs, r => eur(r[1])) + '</div></div>';
+  // najveće narudžbe
+  html += '<div class="sec"><div class="sec-h"><h2>Najveće narudžbe</h2></div><div class="card">' + [...l].sort((x, y) => num(y.cijena) - num(x.cijena)).slice(0, 5).map(orderRow).join('') + '</div></div>';
+  v.innerHTML = html; bindReport(v, l);
+}
+function trendSvg(tm) {
+  const W = 340, H = 150, pad = 18, n = tm.length, bw = (W - pad) / n, max = Math.max(1, ...tm.map(t => Math.max(t.rev, t.ads)));
+  const y = v => H - 22 - (v / max) * (H - 36);
+  let s = '<svg viewBox="0 0 ' + W + ' ' + H + '">';
+  tm.forEach((t, i) => {
+    const x = pad + i * bw + bw * .18, w = bw * .64;
+    s += '<rect x="' + x + '" y="' + y(t.rev) + '" width="' + w + '" height="' + Math.max(0, H - 22 - y(t.rev)) + '" rx="3" fill="currentColor" opacity="' + (t.sel ? 1 : .22) + '" style="color:var(--ink)"><title>' + t.k + ': ' + Math.round(t.rev) + ' €, ' + t.n + ' narudžbi</title></rect>';
+    if (t.profit > 0) s += '<rect x="' + (x + w * .25) + '" y="' + y(t.profit) + '" width="' + w * .5 + '" height="' + Math.max(0, H - 22 - y(t.profit)) + '" rx="2" fill="#15803d" opacity="' + (t.sel ? .95 : .35) + '"/>';
+    if (t.ads > 0) s += '<line x1="' + x + '" x2="' + (x + w) + '" y1="' + y(t.ads) + '" y2="' + y(t.ads) + '" stroke="#e10600" stroke-width="2.5" stroke-linecap="round" opacity="' + (t.sel ? 1 : .45) + '"/>';
+    if (n <= 12 || i % 2 === 0) s += '<text x="' + (x + w / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="9" fill="currentColor" style="color:var(--mute)" opacity=".8">' + MJS[t.d.getMonth()] + '</text>';
+    if (t.sel && n <= 12) s += '<text x="' + (x + w / 2) + '" y="' + (y(t.rev) - 4) + '" text-anchor="middle" font-size="8.5" font-weight="700" fill="currentColor" style="color:var(--ink)">' + (t.rev >= 1000 ? (t.rev / 1000).toFixed(1) + 'k' : Math.round(t.rev)) + '</text>';
+  });
+  return s + '</svg>';
+}
+function bindReport(v, l) {
+  v.querySelectorAll('[data-p]').forEach(b => b.addEventListener('click', () => { haptic(); RS.period = b.dataset.p; renderReport(); }));
+  const f = v.querySelector('#rfilt'); if (f) f.addEventListener('click', reportFilterSheet);
+  const c = v.querySelector('#rclear'); if (c) c.addEventListener('click', () => { Object.assign(RS, { okvir: '', platform: '', vozac: '', staza: '', paid: '' }); renderReport(); });
+  v.querySelector('#rcsv').addEventListener('click', () => exportCsv(l));
+}
+function reportFilterSheet() {
+  const uniq = k => [...new Set(D.orders.map(o => o[k]).filter(Boolean))].sort();
+  const sel = (k, l, opts, lab) => '<div class="field"><label>' + l + '</label><select name="' + k + '"><option value="">Sve</option>' + opts.map(x => '<option value="' + esc(x) + '"' + (RS[k] === x ? ' selected' : '') + '>' + esc(lab ? lab(x) : x) + '</option>').join('') + '</select></div>';
+  openSheet('Filteri izvještaja', '<div style="padding:0 16px"><div class="card">' + sel('okvir', 'Proizvod', uniq('okvir'), x => OKV[x] || x) + sel('platform', 'Platforma', uniq('platform')) + sel('vozac', 'Vozač', uniq('vozac')) + sel('staza', 'Staza', uniq('staza')) + sel('paid', 'Plaćeno', ['Da', 'Ne']) + '</div>'
+    + '<div style="display:flex;gap:10px;margin-top:14px"><button class="btn ghost" id="fx">Očisti</button><button class="btn" id="fo">Primijeni</button></div></div>',
+    b => {
+      b.querySelector('#fo').addEventListener('click', () => { b.querySelectorAll('select').forEach(s => RS[s.name] = s.value); closeTop(); renderReport(); });
+      b.querySelector('#fx').addEventListener('click', () => { Object.assign(RS, { okvir: '', platform: '', vozac: '', staza: '', paid: '' }); closeTop(); renderReport(); });
+    });
+}
+function exportCsv(l) {
+  const cols = ['id', 'created', 'fullname', 'name', 'platform', 'okvir', 'vozac', 'staza', 'godina', 'cijena', 'cost', 'paid', 'status', 'rok_isporuke', 'tracking', 'boxnow_status', 'grad'];
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const csv = '﻿' + cols.join(';') + '\n' + l.map(o => cols.map(c => q(o[c])).join(';')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'mauros-izvjestaj-' + new Date().toISOString().slice(0, 10) + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+  toast('⬇ CSV: ' + l.length + ' narudžbi');
+}
+
+/* ── IZBORNIK I RED IZMJENA ── */
+function openMenu() {
+  openSheet('MaurOS ' + VERSION,
+    '<button class="opt" id="m1">↻ Osvježi podatke</button><button class="opt" id="m2">⏳ Izmjene na čekanju (' + Q.length + ')</button>'
+    + '<div class="note" style="margin:10px 18px">Prijavljen: ' + esc((S && S.user && S.user.email) || '—') + '<br>Zadnje osvježeno: ' + (lastSync ? new Date(lastSync).toLocaleString('hr-HR') : '—') + '</div>'
+    + '<button class="opt" id="m3" style="color:var(--red)">⎋ Odjava</button>',
+    b => { b.querySelector('#m1').onclick = () => { closeTop(); loadAll(); }; b.querySelector('#m2').onclick = () => { closeTop(); setTimeout(openSyncSheet, 280); }; b.querySelector('#m3').onclick = () => { closeTop(); setTimeout(logout, 280); }; });
+}
+function openSyncSheet() {
+  const desc = op => { const o = op.table === 'orders' ? D.orders.find(x => String(x.id) === String(op.id)) : null; return (op.kind === 'insert' ? 'Nova narudžba ' : op.table === 'orders' ? 'Narudžba ' : op.table + ' ') + (o ? oname(o) : '#' + op.id) + ': ' + Object.keys(op.patch || op.row || {}).filter(k => k !== 'id').slice(0, 5).join(', '); };
+  openSheet('Sinkronizacija', (Q.length ? Q.map(op => '<div class="row"><div class="av" style="background:var(--' + (op.failed ? 'red' : 'amber') + 'Bg);color:var(--' + (op.failed ? 'red' : 'amber') + ')">' + (op.failed ? '!' : '⏳') + '</div><div class="rm"><b style="font-size:14px">' + esc(desc(op)) + '</b><div class="rs">' + esc(op.failed ? 'Greška: ' + op.failed : 'čeka slanje · ' + new Date(op.ts).toLocaleTimeString('hr-HR')) + '</div></div></div>').join('')
+    + '<div style="padding:14px 16px"><button class="btn" id="qr">Pokušaj ponovno</button></div><div class="note" style="margin:0 18px 10px">Izmjene se nikad ne brišu same – ostaju ovdje dok ih baza ne prihvati.</div>'
+    : '<div class="empty">✅ Sve izmjene su spremljene u bazu' + (lastSync ? '<br>osvježeno ' + new Date(lastSync).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' }) : '') + '</div>'),
+    b => { const r = b.querySelector('#qr'); if (r) r.onclick = () => { Q.forEach(x => delete x.failed); saveQ(); closeTop(); flush(); toast('Šaljem…'); }; });
+}
+
+/* ── START ── */
+renderAll();
+if (S) loadAll(); else authShow();
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
