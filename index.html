@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v131 | 2026-11-19 | novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<!-- MAUROS VERSION: PWA v132 | 2026-11-19 | push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -243,7 +243,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 /* ═════════ OSNOVA ═════════ */
 const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
-const VERSION = 'v131';
+const VERSION = 'v132';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
@@ -437,6 +437,38 @@ const bnWhen = o => { if (!o.boxnow_updated_at || bn(o) === 'new') return ''; co
 function bnPill(o) { if (!o.tracking || !o.boxnow_status) return ''; const m = BN[bn(o)] || [bn(o), '']; return pill('📦 ' + m[0] + bnWhen(o), m[1]); }
 // v129: osvježi BOX NOW statuse (isto kao gumb u dashboardu)
 let bnSyncing = false;
+// v132: push obavijesti (Web Push). Pretplata se sprema u push_subs; šalje ih server (BOX NOW sync i agenti).
+async function bnFn(action) {
+  if (!(await authEnsure())) throw new Error('Prijava potrebna');
+  const r = await fetch(SB + '/functions/v1/boxnow', { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + S.access_token, 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) });
+  const d = await r.json().catch(() => ({})); if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status)); return d;
+}
+function pushState() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'na';
+  if (Notification.permission === 'denied') return 'blocked';
+  return LS.get('m5_push', null) && Notification.permission === 'granted' ? 'on' : 'off';
+}
+function b64u(s) { const p = '='.repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, c => c.charCodeAt(0)); }
+async function pushEnable() {
+  haptic();
+  if (pushState() === 'na') { toast('Ovaj preglednik ne podržava obavijesti. Otvori MaurOS s ikone na početnom zaslonu.', 4000); return; }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('Obavijesti nisu dopuštene. Uključi ih u postavkama aplikacije (Android → Aplikacije → MaurOS → Obavijesti).', 5000); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const { key } = await bnFn('push-key');
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(key) });
+    const j = sub.toJSON();
+    await rest('POST', 'push_subs?on_conflict=endpoint', { endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, ua: navigator.userAgent.slice(0, 180), active: true }, 'resolution=merge-duplicates,return=minimal');
+    LS.set('m5_push', j.endpoint);
+    toast('🔔 Obavijesti uključene – šaljem probnu…', 3000);
+    await bnFn('push-test');
+    renderAll();
+  } catch (e) { toast('Obavijesti: ' + e.message, 5000); }
+}
+async function pushTest() { try { const r = await bnFn('push-test'); toast(r.sent ? '🔔 Probna obavijest poslana' : 'Nema uključenih uređaja – uključi obavijesti', 3000); } catch (e) { toast('Greška: ' + e.message, 4000); } }
+
 async function syncBoxnow() {
   if (bnSyncing) return; bnSyncing = true; haptic(); toast('🔄 Provjeravam BOX NOW…', 4000);
   document.querySelectorAll('.bnsync').forEach(b => { b.disabled = true; b.textContent = '🔄 Provjeravam BOX NOW…'; });
@@ -576,6 +608,10 @@ function renderHome() {
   // v130: radim sad
   const rd = c('radim').sort(byRok);
   if (rd.length) html += '<div class="sec"><div class="sec-h"><h2>🔨 Radim sad · ' + rd.length + '</h2>' + (rd.length > 6 ? '<a data-qf="radim">Sve ›</a>' : '') + '</div><div class="card">' + rd.slice(0, 6).map(orderRow).join('') + '</div></div>';
+  // v132: dnevni izvještaj (narudžbe po datumu kreiranja)
+  html += dayCard();
+  // v132: obavijesti
+  if (pushState() !== 'on' && pushState() !== 'na') html += '<div class="sec"><button class="btn ghost" id="pushOn">🔔 Uključi obavijesti o paketima</button><div class="note" style="text-align:center">Javim ti kad je paket u paketomatu ili preuzet, i kad agent nešto obradi.</div></div>';
   // ovaj mjesec
   const now = new Date(), mk = ymKey(now), pm = ymKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
   const m = monthStats(mk), p = monthStats(pm);
@@ -598,6 +634,9 @@ function renderHome() {
   html += '<div class="note" style="text-align:center;margin:18px">Zadnje osvježeno ' + (lastSync ? new Date(lastSync).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' }) : '—') + ' · MaurOS ' + VERSION + '</div>';
   $('#v-home').innerHTML = html;
   $('#v-home').querySelectorAll('[data-qf]').forEach(b => b.addEventListener('click', () => { haptic(); qfSheet(b.dataset.qf); }));
+  $('#v-home').querySelectorAll('[data-day]').forEach(b => b.addEventListener('click', () => { haptic(); dayRange = b.dataset.day; renderHome(); }));
+  const dl = $('#dayList'); if (dl) dl.addEventListener('click', () => { haptic(); daySheet(); });
+  const po = $('#pushOn'); if (po) po.addEventListener('click', pushEnable);
 }
 function qfSheet(k) {
   const byBn = (a, b) => new Date(b.boxnow_updated_at || 0) - new Date(a.boxnow_updated_at || 0); // v129: paketi – najnovija promjena prva
@@ -610,6 +649,48 @@ function qfSheet(k) {
 }
 function delta(a, b) { if (!b) return ''; const p = Math.round((a - b) / b * 100); return '<span class="delta ' + (p >= 0 ? 'up' : 'dn') + '">' + (p >= 0 ? '+' : '') + p + '%</span>'; }
 function costOf(o) { return num(o.cost); }
+// v132: dnevni izvještaj – koliko je danas naručeno i zarađeno
+let dayRange = 'danas';
+function dayBounds(k) {
+  const t = today0(), a = new Date(t), b = new Date(t); b.setDate(b.getDate() + 1);
+  if (k === 'jucer') { a.setDate(a.getDate() - 1); b.setDate(b.getDate() - 1); }
+  if (k === '7d') a.setDate(a.getDate() - 6);
+  return [a, b];
+}
+function dayStats(k) {
+  const [a, b] = dayBounds(k);
+  const l = D.orders.filter(o => { const c = created(o); return o.status !== 'Otkazano' && c && c >= a && c < b; });
+  const rev = l.reduce((s, o) => s + num(o.cijena), 0);
+  // trošak: upisani, a gdje ga još nema – prosjek istog proizvoda (procjena)
+  const avg = avgCostByProd();
+  const withCost = l.filter(o => costOf(o) > 0);
+  const profit = l.reduce((s, o) => s + num(o.cijena) - (costOf(o) > 0 ? costOf(o) : (avg[o.okvir] || 0)), 0);
+  const paid = l.filter(o => o.paid === 'Da').reduce((s, o) => s + num(o.cijena), 0);
+  return { l, n: l.length, rev, profit, paid, nCost: withCost.length };
+}
+let _avgC = null, _avgN = -1;
+function avgCostByProd() {
+  if (_avgC && _avgN === D.orders.length) return _avgC;
+  const acc = {}; D.orders.forEach(o => { if (costOf(o) > 0 && o.status !== 'Otkazano') { const k = o.okvir || ''; (acc[k] = acc[k] || []).push(costOf(o)); } });
+  _avgC = {}; Object.keys(acc).forEach(k => { const v = acc[k].slice(-60); _avgC[k] = v.reduce((s, x) => s + x, 0) / v.length; });
+  _avgN = D.orders.length; return _avgC;
+}
+function dayCard() {
+  const st = dayStats(dayRange), prev = dayRange === 'danas' ? dayStats('jucer') : null;
+  const lbl = { danas: 'Danas', jucer: 'Jučer', '7d': 'Zadnjih 7 dana' }[dayRange];
+  const seg = ['danas', 'jucer', '7d'].map(k => '<button class="chip' + (k === dayRange ? ' on' : '') + '" data-day="' + k + '">' + { danas: 'Danas', jucer: 'Jučer', '7d': '7 dana' }[k] + '</button>').join('');
+  return '<div class="sec"><div class="sec-h"><h2>' + lbl + '</h2><div style="display:flex;gap:6px">' + seg + '</div></div><div class="card pad"><div class="grid3">'
+    + '<div class="mini"><div class="v">' + (st.nCost < st.n ? '~' : '') + eur(st.profit) + '</div><div class="l">zarada' + (prev ? ' ' + delta(st.profit, prev.profit) : '') + '</div></div>'
+    + '<div class="mini"><div class="v">' + eur(st.rev) + '</div><div class="l">prihod' + (prev ? ' ' + delta(st.rev, prev.rev) : '') + '</div></div>'
+    + '<div class="mini"><div class="v">' + st.n + '</div><div class="l">narudžbi</div></div>'
+    + '</div><div class="note">Plaćeno ' + eur(st.paid) + ' od ' + eur(st.rev) + (st.n && st.nCost < st.n ? ' · za ' + (st.n - st.nCost) + ' od ' + st.n + ' narudžbi trošak je procjena (prosjek tog proizvoda)' : '') + '</div>'
+    + (st.n ? '<button class="btn ghost" id="dayList" style="margin-top:10px">Pogledaj narudžbe (' + st.n + ')</button>' : '') + '</div></div>';
+}
+function daySheet() {
+  const st = dayStats(dayRange);
+  openSheet({ danas: 'Danas', jucer: 'Jučer', '7d': 'Zadnjih 7 dana' }[dayRange] + ' · ' + st.n, '<div class="note" style="margin:0 18px 8px">Prihod ' + eur2(st.rev) + ' · zarada ' + eur2(st.profit) + '</div>' + st.l.map(orderRow).join(''));
+}
+
 function monthStats(k) {
   const l = D.orders.filter(o => o.status !== 'Otkazano' && created(o) && ymKey(created(o)) === k);
   const rev = l.reduce((s, o) => s + num(o.cijena), 0);
@@ -1077,10 +1158,10 @@ function exportCsv(l) {
 /* ── IZBORNIK I RED IZMJENA ── */
 function openMenu() {
   openSheet('MaurOS ' + VERSION,
-    '<button class="opt" id="m1">↻ Osvježi podatke</button><button class="opt" id="m4">📦 Osvježi BOX NOW statuse</button><button class="opt" id="m2">⏳ Izmjene na čekanju (' + Q.length + ')</button>'
+    '<button class="opt" id="m1">↻ Osvježi podatke</button><button class="opt" id="m4">📦 Osvježi BOX NOW statuse</button><button class="opt" id="m5">🔔 ' + ({ on: 'Obavijesti su uključene · pošalji probnu', off: 'Uključi obavijesti', blocked: 'Obavijesti blokirane (postavke mobitela)', na: 'Obavijesti nisu podržane ovdje' }[pushState()]) + '</button><button class="opt" id="m2">⏳ Izmjene na čekanju (' + Q.length + ')</button>'
     + '<div class="note" style="margin:10px 18px">Prijavljen: ' + esc((S && S.user && S.user.email) || '—') + '<br>Zadnje osvježeno: ' + (lastSync ? new Date(lastSync).toLocaleString('hr-HR') : '—') + '</div>'
     + '<button class="opt" id="m3" style="color:var(--red)">⎋ Odjava</button>',
-    b => { b.querySelector('#m1').onclick = () => { closeTop(); loadAll(); }; b.querySelector('#m4').onclick = () => { closeTop(); setTimeout(syncBoxnow, 280); }; b.querySelector('#m2').onclick = () => { closeTop(); setTimeout(openSyncSheet, 280); }; b.querySelector('#m3').onclick = () => { closeTop(); setTimeout(logout, 280); }; });
+    b => { b.querySelector('#m1').onclick = () => { closeTop(); loadAll(); }; b.querySelector('#m4').onclick = () => { closeTop(); setTimeout(syncBoxnow, 280); }; b.querySelector('#m5').onclick = () => { closeTop(); setTimeout(pushState() === 'on' ? pushTest : pushEnable, 280); }; b.querySelector('#m2').onclick = () => { closeTop(); setTimeout(openSyncSheet, 280); }; b.querySelector('#m3').onclick = () => { closeTop(); setTimeout(logout, 280); }; });
 }
 function openSyncSheet() {
   const desc = op => { const o = op.table === 'orders' ? D.orders.find(x => String(x.id) === String(op.id)) : null; return (op.kind === 'insert' ? 'Nova narudžba ' : op.table === 'orders' ? 'Narudžba ' : op.table + ' ') + (o ? oname(o) : '#' + op.id) + ': ' + Object.keys(op.patch || op.row || {}).filter(k => k !== 'id').slice(0, 5).join(', '); };
@@ -1093,6 +1174,12 @@ function openSyncSheet() {
 /* ── START ── */
 renderAll();
 if (S) loadAll(); else authShow();
+// v132: klik na obavijest otvara narudžbu (?o=ID)
+(function openFromLink() {
+  const id = new URLSearchParams(location.search).get('o'); if (!id) return;
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  let n = 0; const t = setInterval(() => { if (D.orders.some(x => String(x.id) === id)) { clearInterval(t); openOrder(id); } else if (++n > 40) clearInterval(t); }, 250);
+})();
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
