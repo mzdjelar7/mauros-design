@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v132 | 2026-11-19 | push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<!-- MAUROS VERSION: PWA v133 | 2026-11-19 | centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -42,6 +42,21 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .dot.wait{background:var(--amber);animation:pulse 1s infinite}.dot.err{background:var(--red)}
 @keyframes pulse{50%{opacity:.3}}
 .iconbtn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);font-size:17px}
+/* v133: obavijesti */
+.bell{position:relative;font-size:16px}
+.nbadge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg)}
+.nrow{display:flex;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);align-items:flex-start;text-align:left;width:100%;position:relative}
+.nrow.new{background:var(--blueBg)}
+.nrow.new::after{content:'';position:absolute;right:12px;top:16px;width:8px;height:8px;border-radius:50%;background:var(--blue)}
+.nrow .nt{font-weight:650;font-size:14.5px;padding-right:16px}
+.nrow .nb{font-size:13px;color:var(--ink2);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nrow .nm{font-size:11.5px;color:var(--mute);margin-top:4px}
+.nday{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin:14px 18px 6px}
+.nfull{padding:4px 18px 12px;font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.nfull a,.ndet a{color:var(--blue);font-weight:600}
+.ndet{padding:10px 16px;border-bottom:1px solid var(--line);font-size:13.5px}
+.ndet .h{font-weight:650;margin-bottom:4px}
+.ndet pre{margin:6px 0 0;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--ink2);background:var(--card2);border-radius:10px;padding:8px 10px}
 /* views */
 #views{flex:1;position:relative;overflow:hidden}
 .view{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:4px 0 calc(var(--tab) + var(--sb) + 90px);display:none}
@@ -208,6 +223,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
   <header id="hdr">
     <div style="flex:1;min-width:0"><h1 id="title">Početna</h1><div class="sub" id="subtitle"></div></div>
     <button class="sync" id="sync" onclick="openSyncSheet()"><span class="dot" id="syncdot"></span><span id="synctxt">…</span></button>
+    <button class="iconbtn bell" id="bellBtn" onclick="openNotif()" aria-label="Obavijesti">🔔<span class="nbadge" id="nbadge" hidden></span></button>
     <button class="iconbtn" onclick="openMenu()" aria-label="Izbornik">⋯</button>
   </header>
   <main id="views">
@@ -243,7 +259,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 /* ═════════ OSNOVA ═════════ */
 const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
-const VERSION = 'v132';
+const VERSION = 'v133';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
@@ -383,7 +399,7 @@ async function loadAll(silent) {
     lastSync = Date.now(); LS.set('m5_lastsync', lastSync);
     autoDelivered();
   } catch (e) { if (!e.auth) { online = false; if (!silent) toast('Nema veze s bazom – prikazujem spremljene podatke'); } }
-  finally { loading = false; renderAll(); flush(); }
+  finally { loading = false; renderAll(); flush(); loadNotif(); }
 }
 // BOX NOW "delivered" => status Isporučeno
 function autoDelivered() {
@@ -437,6 +453,111 @@ const bnWhen = o => { if (!o.boxnow_updated_at || bn(o) === 'new') return ''; co
 function bnPill(o) { if (!o.tracking || !o.boxnow_status) return ''; const m = BN[bn(o)] || [bn(o), '']; return pill('📦 ' + m[0] + bnWhen(o), m[1]); }
 // v129: osvježi BOX NOW statuse (isto kao gumb u dashboardu)
 let bnSyncing = false;
+// v133: centar obavijesti – povijest iz push_log (sve što je poslano na mobitel) + dnevnik agenata (agent_log)
+let NT = { log: LS.get('m5_ntlog', []), alog: LS.get('m5_ntalog', []) }, ntFilter = 'sve';
+async function loadNotif() {
+  try {
+    const [l, a] = await Promise.all([rest('GET', 'push_log?select=*&order=id.desc&limit=300'), rest('GET', 'agent_log?select=*&order=id.desc&limit=200')]);
+    if (Array.isArray(l)) { NT.log = l; LS.set('m5_ntlog', l.slice(0, 300)); }
+    if (Array.isArray(a)) { NT.alog = a; LS.set('m5_ntalog', a.slice(0, 200)); }
+  } catch (e) {}
+  updateBell(); const sc = document.querySelector('.screen[data-notif]'); if (sc) drawNotif(sc);
+}
+function ntUnread() { const seen = LS.get('m5_ntseen', 0); return NT.log.filter(x => x.id > seen).length; }
+function updateBell() { const b = $('#nbadge'); if (!b) return; const n = ntUnread(); b.hidden = !n; b.textContent = n > 99 ? '99+' : n; }
+const NK_PROBLEM = ['returned', 'expired', 'lost', 'missing', 'canceled', 'cancelled'];
+function nKind(k) {
+  k = String(k || '');
+  if (k === 'in-final-destination') return ['📍', 'BOX NOW · u paketomatu', 'paketi', 'blue'];
+  if (k === 'delivered') return ['✅', 'BOX NOW · preuzeto', 'paketi', 'green'];
+  if (NK_PROBLEM.includes(k)) return ['⚠️', 'BOX NOW · problem', 'paketi', 'red'];
+  if (k === 'summary') return ['📦', 'BOX NOW · zbirno', 'paketi', 'blue'];
+  if (k === 'agent:jobs') return ['📦', 'BOX NOW · nove pošiljke', 'paketi', 'teal'];
+  if (k === 'agent:banka') return ['🏦', 'Agent Banka i Gmail', 'agenti', 'amber'];
+  if (k === 'agent:jutro') return ['☀️', 'Agent Jutro', 'agenti', 'amber'];
+  if (k === 'agent:print') return ['🖨', 'Agent Print', 'agenti', 'violet'];
+  if (k === 'agent:proba') return ['🤖', 'Proba agenta', 'ostalo', ''];
+  if (k === 'agent:primjer') return ['🧪', 'Primjer', 'ostalo', ''];
+  if (k === 'test') return ['🔔', 'Probna obavijest', 'ostalo', ''];
+  if (k.startsWith('agent:')) return ['🤖', 'Agent ' + k.slice(6), 'agenti', ''];
+  return ['🔔', k || 'Obavijest', 'ostalo', ''];
+}
+const AG_ICON = { banka: '🏦', jutro: '☀️', print: '🖨', proba: '🤖' };
+function nDayLabel(d) { const t = today0(), x = new Date(d); x.setHours(0, 0, 0, 0); const df = Math.round((t - x) / 864e5); return df === 0 ? 'Danas' : df === 1 ? 'Jučer' : new Date(d).toLocaleDateString('hr-HR', { weekday: 'long', day: 'numeric', month: 'numeric' }); }
+const nTime = d => new Date(d).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' });
+function linkify(t) { return esc(t).replace(/https?:\/\/[^\s<]+/g, u => '<a href="' + u + '">' + (u.length > 48 ? u.slice(0, 45) + '…' : u) + '</a>'); }
+function openNotif() {
+  haptic();
+  const el = openScreen('<div class="shdr"><button class="back" onclick="closeTop()">‹ Natrag</button><div class="t">Obavijesti</div><button class="back" data-r>↻</button></div><div class="sbody"></div>');
+  el.dataset.notif = '1'; el._seen = LS.get('m5_ntseen', 0);
+  el.querySelector('[data-r]').addEventListener('click', () => { haptic(); loadNotif(); toast('Osvježavam…', 1000); });
+  drawNotif(el); loadNotif();
+  const top = NT.log.length ? NT.log[0].id : 0; LS.set('m5_ntseen', Math.max(LS.get('m5_ntseen', 0), top)); updateBell();
+}
+function drawNotif(el) {
+  const seen = el._seen || 0;
+  const chips = [['sve', 'Sve'], ['paketi', '📦 Paketi'], ['agenti', '🤖 Agenti'], ['dnevnik', '📓 Dnevnik agenata'], ['ostalo', 'Ostalo']];
+  let html = '<div class="hscroll" style="padding:10px 14px 4px">' + chips.map(([k, l]) => '<button class="chip' + (k === ntFilter ? ' on' : '') + '" data-nf="' + k + '">' + l + '</button>').join('') + '</div>';
+  if (ntFilter === 'dnevnik') {
+    html += '<div class="note" style="margin:6px 18px">Sve što su agenti napravili, i kad nije bilo obavijesti.</div>';
+    let last = '';
+    html += NT.alog.length ? NT.alog.map((a, i) => { const dl = nDayLabel(a.created_at), hd = dl !== last ? '<div class="nday">' + esc(dl) + '</div>' : ''; last = dl;
+      return hd + '<button class="nrow" data-al="' + i + '"><div class="av" style="background:var(--card2)">' + (AG_ICON[a.agent] || '🤖') + '</div><div class="rm"><div class="nt">' + esc(a.summary || '(bez sažetka)') + '</div><div class="nm">' + esc(a.agent) + ' · ' + nTime(a.created_at) + '</div></div></button>'; }).join('')
+      : '<div class="empty">Agenti još nisu ništa zapisali</div>';
+  } else {
+    const l = NT.log.filter(n => ntFilter === 'sve' || nKind(n.kind)[2] === ntFilter);
+    let last = '';
+    html += l.length ? l.map(n => { const k = nKind(n.kind), dl = nDayLabel(n.created_at), hd = dl !== last ? '<div class="nday">' + esc(dl) + '</div>' : ''; last = dl;
+      return hd + '<button class="nrow' + (n.id > seen ? ' new' : '') + '" data-nid="' + n.id + '"><div class="av" style="background:' + (k[3] ? 'var(--' + k[3] + 'Bg)' : 'var(--card2)') + '">' + k[0] + '</div><div class="rm"><div class="nt">' + esc(n.title) + '</div>' + (n.body ? '<div class="nb">' + esc(n.body) + '</div>' : '') + '<div class="nm">' + nTime(n.created_at) + ' · ' + esc(k[1]) + (n.sent === 0 && n.failed === 0 ? ' · nije bilo prijavljenog mobitela' : n.failed ? ' · ' + n.failed + ' nije stiglo' : '') + '</div></div></button>'; }).join('')
+      : '<div class="empty">Nema obavijesti' + (ntFilter !== 'sve' ? ' u ovoj skupini' : '') + '</div>';
+  }
+  html += '<div class="note" style="text-align:center;margin:16px">Zadnjih 300 obavijesti · povuci udesno za natrag</div>';
+  const b = el.querySelector('.sbody'); b.innerHTML = html;
+  b.onclick = e => {
+    const c = e.target.closest('[data-nf]'); if (c) { haptic(); ntFilter = c.dataset.nf; drawNotif(el); return; }
+    const r = e.target.closest('[data-nid]'); if (r) { haptic(); notifDetail(NT.log.find(x => String(x.id) === r.dataset.nid)); return; }
+    const a = e.target.closest('[data-al]'); if (a) { haptic(); agentDetail(NT.alog[+a.dataset.al]); }
+  };
+}
+// detalji: cijeli tekst, kad i kome je poslano, narudžba, i što je agent točno napravio (agent_log oko tog vremena)
+function fmtDetails(v, depth) {
+  depth = depth || 0;
+  if (v == null) return '';
+  if (Array.isArray(v)) return v.map(x => (typeof x === 'object' ? fmtDetails(x, depth + 1) : '• ' + String(x))).join('\n');
+  if (typeof v === 'object') return Object.keys(v).map(k => { const x = v[k]; return typeof x === 'object' && x !== null ? k + ':\n' + fmtDetails(x, depth + 1).replace(/^/gm, '   ') : k + ': ' + String(x); }).join('\n');
+  return String(v);
+}
+function agentBlock(a) {
+  return '<div class="ndet"><div class="h">' + (AG_ICON[a.agent] || '🤖') + ' ' + esc(a.agent) + ' · ' + new Date(a.created_at).toLocaleString('hr-HR', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) + '</div>' + linkify(a.summary || '')
+    + (a.details && Object.keys(a.details).length ? '<pre>' + linkify(fmtDetails(a.details)) + '</pre>' : '') + '</div>';
+}
+function notifDetail(n) {
+  if (!n) return;
+  const k = nKind(n.kind), o = n.order_id ? D.orders.find(x => String(x.id) === String(n.order_id)) : null;
+  const agent = String(n.kind || '').startsWith('agent:') ? n.kind.slice(6) : null, t = new Date(n.created_at).getTime();
+  const al = agent ? NT.alog.filter(a => a.agent === agent && Math.abs(new Date(a.created_at).getTime() - t) < 30 * 60e3) : [];
+  const kv = (a, b) => b ? '<div class="kv"><span class="k">' + a + '</span><span class="vv">' + b + '</span></div>' : '';
+  openSheet(k[0] + ' ' + k[1],
+    '<div class="nfull"><b>' + esc(n.title) + '</b>' + (n.body ? '\n' + linkify(n.body) : '') + '</div>'
+    + '<div class="card" style="margin:0 14px 12px">'
+    + kv('Vrijeme', esc(new Date(n.created_at).toLocaleString('hr-HR', { weekday: 'short', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })))
+    + kv('Izvor', esc(agent ? 'Agent u oblaku (' + agent + ')' : String(n.kind || '').startsWith('agent:') || n.kind === 'test' ? k[1] : 'Server – BOX NOW provjera svakih 10 min'))
+    + kv('Dostava na mobitel', n.sent ? '✅ stiglo na ' + n.sent + ' uređaj' + (n.sent > 1 ? 'a' : '') : n.failed ? '⚠️ nije stiglo (' + n.failed + ')' : 'nijedan mobitel nije bio prijavljen')
+    + kv('Pošiljka', n.tracking ? '<span class="mono">' + esc(n.tracking) + '</span>' : '')
+    + kv('Narudžba', o ? esc(oname(o)) + ' · ' + esc(o.status) : n.order_id ? esc(n.order_id) : '')
+    + '</div>'
+    + (o ? '<div style="padding:0 14px 12px"><button class="btn" id="nOpen">Otvori narudžbu</button></div>' : '')
+    + (agent ? '<div class="nday">Što je agent napravio</div>' + (al.length ? al.map(agentBlock).join('') : '<div class="note" style="margin:0 18px 12px">Agent za ovo nije ostavio detaljan zapis.</div>') : ''),
+    b => { const x = b.querySelector('#nOpen'); if (x) x.onclick = () => { closeTop(); setTimeout(() => openOrder(o.id), 280); }; });
+}
+function agentDetail(a) {
+  if (!a) return;
+  const t = new Date(a.created_at).getTime();
+  const sent = NT.log.filter(n => n.kind === 'agent:' + a.agent && Math.abs(new Date(n.created_at).getTime() - t) < 30 * 60e3);
+  openSheet((AG_ICON[a.agent] || '🤖') + ' Agent ' + a.agent, agentBlock(a)
+    + (sent.length ? '<div class="nday">Poslane obavijesti</div>' + sent.map(n => '<div class="ndet"><b>' + esc(n.title) + '</b><br>' + linkify(n.body || '') + '</div>').join('') : '<div class="note" style="margin:10px 18px">Ovaj put nije bilo obavijesti (ništa novo).</div>'));
+}
+
 // v132: push obavijesti (Web Push). Pretplata se sprema u push_subs; šalje ih server (BOX NOW sync i agenti).
 async function bnFn(action) {
   if (!(await authEnsure())) throw new Error('Prijava potrebna');
@@ -1176,7 +1297,9 @@ renderAll();
 if (S) loadAll(); else authShow();
 // v132: klik na obavijest otvara narudžbu (?o=ID)
 (function openFromLink() {
-  const id = new URLSearchParams(location.search).get('o'); if (!id) return;
+  const qs = new URLSearchParams(location.search), id = qs.get('o');
+  if (qs.get('n')) { try { history.replaceState(null, '', location.pathname); } catch (e) {} setTimeout(openNotif, 400); return; }
+  if (!id) return;
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   let n = 0; const t = setInterval(() => { if (D.orders.some(x => String(x.id) === id)) { clearInterval(t); openOrder(id); } else if (++n > 40) clearInterval(t); }, 250);
 })();
