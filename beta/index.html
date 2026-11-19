@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v130 | 2026-11-19 | "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<!-- MAUROS VERSION: PWA v131 | 2026-11-19 | novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -18,14 +18,14 @@
 :root{
   --bg:#f3f2ef;--card:#ffffff;--card2:#f7f6f3;--ink:#111111;--ink2:#4b4b4f;--mute:#8e8e93;--line:#e9e6e0;
   --acc:#111111;--accInk:#ffffff;--red:#e10600;--redBg:#fde8e7;--green:#15803d;--greenBg:#e3f5e9;
-  --amber:#b45309;--amberBg:#fdf1dc;--rdBg:#fde68a;--rdLine:#f59e0b;--blue:#1d4ed8;--blueBg:#e4ebfd;--teal:#0e7490;--tealBg:#dff4f8;
+  --amber:#b45309;--amberBg:#fdf1dc;--rdBg:#fde68a;--rdLine:#f59e0b;--orange:#c2410c;--orangeBg:#ffedd5;--blue:#1d4ed8;--blueBg:#e4ebfd;--teal:#0e7490;--tealBg:#dff4f8;
   --violet:#6d28d9;--violetBg:#eee8fc;--r:18px;--rs:12px;
   --sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px);--tab:62px;
   --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);
 }
 @media (prefers-color-scheme: dark){:root{
   --bg:#0c0c0e;--card:#17171a;--card2:#1f1f23;--ink:#f4f4f5;--ink2:#c2c2c7;--mute:#85858c;--line:#2a2a2f;
-  --acc:#ffffff;--accInk:#111111;--redBg:#3a1513;--greenBg:#12301d;--amberBg:#35260f;--rdBg:#4a3608;--rdLine:#d97706;--blueBg:#172446;--tealBg:#0f2d33;--violetBg:#271a45;
+  --acc:#ffffff;--accInk:#111111;--redBg:#3a1513;--greenBg:#12301d;--amberBg:#35260f;--rdBg:#4a3608;--rdLine:#d97706;--orange:#fb923c;--orangeBg:#3d1d0a;--blueBg:#172446;--tealBg:#0f2d33;--violetBg:#271a45;
   --shadow:none;}}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;overscroll-behavior:none}
@@ -84,7 +84,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .rs{font-size:13px;color:var(--ink2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
 .pill{font-size:11px;font-weight:650;padding:3px 8px;border-radius:20px;white-space:nowrap;background:var(--card2);color:var(--ink2)}
-.p-red{background:var(--redBg);color:var(--red)}.p-green{background:var(--greenBg);color:var(--green)}.p-amber{background:var(--amberBg);color:var(--amber)}
+.p-red{background:var(--redBg);color:var(--red)}.p-green{background:var(--greenBg);color:var(--green)}.p-amber{background:var(--amberBg);color:var(--amber)}.p-orange{background:var(--orangeBg);color:var(--orange)}
 .p-blue{background:var(--blueBg);color:var(--blue)}.p-teal{background:var(--tealBg);color:var(--teal)}.p-violet{background:var(--violetBg);color:var(--violet)}
 .blink{animation:pulse 1.2s infinite}
 /* chips */
@@ -243,7 +243,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 /* ═════════ OSNOVA ═════════ */
 const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
-const VERSION = 'v130';
+const VERSION = 'v131';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
@@ -401,9 +401,9 @@ function setSync() {
 }
 
 /* ═════════ POMOĆNE ZA NARUDŽBE ═════════ */
-const ST = ['Novo', 'Print poslan', 'U izradi', 'Završeno', 'Poslano', 'Isporučeno', 'Problem'];
-const STC = { 'Novo': 'blue', 'Print poslan': 'green', 'U izradi': 'amber', 'Završeno': 'violet', 'Poslano': 'teal', 'Isporučeno': '', 'Problem': 'red', 'Otkazano': '' };
-const STHEX = { 'Novo': '#1d4ed8', 'Print poslan': '#15803d', 'U izradi': '#b45309', 'Završeno': '#6d28d9', 'Poslano': '#0e7490', 'Isporučeno': '#78716c', 'Problem': '#e10600' };
+const ST = ['Novo', 'Print poslan', 'U izradi', 'Radim sad', 'Završeno', 'Poslano', 'Isporučeno', 'Problem'];
+const STC = { 'Novo': 'blue', 'Print poslan': 'green', 'U izradi': 'amber', 'Radim sad': 'orange', 'Završeno': 'violet', 'Poslano': 'teal', 'Isporučeno': '', 'Problem': 'red', 'Otkazano': '' };
+const STHEX = { 'Novo': '#1d4ed8', 'Print poslan': '#15803d', 'U izradi': '#b45309', 'Radim sad': '#ea580c', 'Završeno': '#6d28d9', 'Poslano': '#0e7490', 'Isporučeno': '#78716c', 'Problem': '#e10600' };
 const OKV = { 'F1 okvir vozac i staza': 'Okvir vozač + staza', 'F1 okvir vozaca': 'Okvir vozač', 'F1 staza': 'Staza', 'F1 3d podmjetaci': '3D podmetači', 'F1 privjesak': 'Privjesak', 'F1 kalendar': 'Kalendar', 'F1 lego stalak': 'Lego stalak', 'F1 bozicna kuglica': 'Božićna kuglica' };
 const BN = { 'new': ['Čeka predaju', ''], 'in-depot': ['U dostavi', 'blue'], 'in-transit': ['U dostavi', 'blue'], 'accepted-for-delivery': ['U dostavi', 'blue'], 'accepted-to-locker': ['Preuzeto', 'blue'], 'in-final-destination': ['U paketomatu', 'amber'], 'delivered': ['Dostavljeno', 'green'], 'returned': ['Vraćeno', 'red'], 'expired': ['Isteklo', 'red'], 'lost': ['Izgubljeno', 'red'], 'missing': ['Nedostaje', 'red'], 'canceled': ['Poništeno', 'red'] };
 const BN_SENT = ['in-depot', 'in-transit', 'accepted-for-delivery', 'accepted-to-locker', 'in-final-destination', 'delivered'];
@@ -474,7 +474,7 @@ const QF = {
   kasni: { l: 'Kasni', f: isLate },
   uskoro: { l: 'Rok ≤ 3 dana', f: o => { if (shipped(o)) return false; const r = rokInfo(o); return !!r && r.diff >= 0 && r.diff <= 3; } },
   print: { l: 'Čeka print', f: o => o.status === 'Novo' && isFrame(o) && o.paid === 'Da' },
-  izrada: { l: 'Za izradu', f: o => (o.status === 'Print poslan' || o.status === 'U izradi') && o.paid === 'Da' },
+  izrada: { l: 'Za izradu', f: o => (o.status === 'Print poslan' || o.status === 'U izradi' || o.status === 'Radim sad') && o.paid === 'Da' },
   zaposlati: { l: 'Gotovo, nije poslano', f: o => o.status === 'Završeno' && !shipped(o) },
   dostava: { l: 'U dostavi', f: o => ['in-depot', 'in-transit', 'accepted-for-delivery', 'accepted-to-locker'].includes(bn(o)) && o.status !== 'Isporučeno' },
   paketomat: { l: 'U paketomatu', f: o => bn(o) === 'in-final-destination' },
