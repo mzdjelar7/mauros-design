@@ -1,6 +1,6 @@
-// MaurOS PWA v127 – service worker
+// MaurOS PWA v128 – service worker
 // Uvijek prvo mreža (nova verzija odmah), cache samo kad nema interneta. Supabase se NE cacheira.
-const CACHE = 'mauros-pwa-v127';
+const CACHE = 'mauros-pwa-v128';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon-192-v126.png', 'icon-512-v126.png', 'apple-touch-icon-v126.png', 'favicon-v126.png'];
 
 self.addEventListener('install', e => {

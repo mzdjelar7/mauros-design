@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v127 | 2026-11-19 | izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<!-- MAUROS VERSION: PWA v128 | 2026-11-19 | Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -235,7 +235,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 /* ═════════ OSNOVA ═════════ */
 const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
-const VERSION = 'v127';
+const VERSION = 'v128';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
@@ -631,11 +631,11 @@ function drawOrder(el) {
     + '<div class="actions">'
     + '<button class="act" data-a="status"><span class="i">🔄</span>Status</button>'
     + '<button class="act" data-a="paid"><span class="i">' + (o.paid === 'Da' ? '💶' : '💸') + '</span>' + (o.paid === 'Da' ? 'Plaćeno' : 'Označi plaćeno') + '</button>'
-    + (() => { const s = social(o); const href = s.chat || s.inbox; return '<a class="act" href="' + esc(href) + '" target="_blank" rel="noopener"' + (s.chat ? '' : ' data-search="' + esc(s.search) + '"') + '><span class="i">💬</span>' + esc(s.label) + '</a>'; })()
+    + (() => { const s = social(o); return '<a class="act" ' + linkAttrs(s.chat || s.inbox) + (s.chat ? '' : ' data-search="' + esc(s.search) + '"') + '><span class="i">💬</span>' + esc(s.label) + '</a>'; })()
     + '<button class="act" data-a="copy"><span class="i">📋</span>' + (o.tracking ? 'Tracking' : 'Kopiraj') + '</button>'
     + '</div>'
     + card('Proizvod', kv('Proizvod', prod(o)) + kv('Vozač', o.vozac) + kv('Staza', o.staza) + kv('Godina', o.godina) + kv('Tekst', o.tekst) + kv('Posveta', o.posveta === 'Da' ? (o.posveta_tekst || 'Da') : '') + kv('Kuglice', o.kuglice) + kv('Privjesci', o.privjesci) + kv('Stanje bolida', o.bolid_stanje))
-    + card('Kupac', kv('Ime', o.fullname) + kv('Profil', o.name, false, social(o).profile ? ' <a class="copy" target="_blank" rel="noopener" href="' + esc(social(o).profile) + '">otvori ›</a>' : '') + kv('Platforma', o.platform) + kv('Mobitel', o.tel, false, tel ? ' <a class="copy" href="tel:' + esc(tel) + '">nazovi</a>' : '') + kv('E-mail', o.email))
+    + card('Kupac', kv('Ime', o.fullname) + kv('Profil', o.name, false, social(o).profile ? ' <a class="copy" ' + linkAttrs(social(o).profile) + '>otvori ›</a>' : '') + kv('Platforma', o.platform) + kv('Mobitel', o.tel, false, tel ? ' <a class="copy" href="tel:' + esc(tel) + '">nazovi</a>' : '') + kv('E-mail', o.email))
     + card('Dostava', kv('Rok isporuke', r ? fmtD(r.d) + (shipped(o) ? '' : r.diff < 0 ? ' (kasni ' + (-r.diff) + 'd)' : ' (za ' + r.diff + 'd)') : '') + kv('Paketomat', o.boxnow) + kv('BOX NOW ID', o.tracking, true, o.tracking ? ' <span class="copy" data-copy="' + esc(o.tracking) + '">kopiraj</span>' : '') + kv('BOX NOW status', bnTxt) + kv('Primatelj', o.dostava_ime) + kv('Adresa', o.adresa || [o.ulica, o.pbr, o.grad].filter(Boolean).join(', ')))
     + card('Financije', kv('Cijena', o.cijena ? eur2(o.cijena) : '') + kv('Trošak', costOf(o) ? eur2(costOf(o)) : '') + kv('Zarada', profit != null ? eur2(profit) + ' (' + Math.round(profit / Math.max(1, num(o.cijena)) * 100) + '%)' : '') + kv('Plaćeno', o.paid))
     + card('Napomene', kv('Napomena', o.note) + kv('Interno', o.priv_note))
@@ -651,23 +651,26 @@ function drawOrder(el) {
   };
 }
 // v126: chat / profil kupca na platformi s koje je narudžba došla
+// v128: na Androidu linkovi idu izravno u aplikaciju (intent), s web rezervom ako aplikacija nije instalirana.
+// Bez target=_blank – novi prozor u instaliranoj PWA ostaje prazan.
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
+const APP = { ig: 'com.instagram.android', tt: 'com.zhiliaoapp.musically', mbs: 'com.facebook.pages.app' };
+function appLink(https, pkg, fallback) {
+  if (!IS_ANDROID) return { href: https, ext: true };
+  const u = new URL(https);
+  return { href: 'intent://' + u.host + u.pathname + u.search + '#Intent;scheme=https;package=' + pkg + ';S.browser_fallback_url=' + encodeURIComponent(fallback || https) + ';end', ext: false };
+}
 function social(o) {
   const p = String(o.platform || '').toLowerCase(), raw = String(o.name || '').trim();
   const user = raw.replace(/^@/, '').replace(/^https?:\/\/(www\.)?(instagram|tiktok)\.com\/@?/i, '').replace(/[/?].*$/, '');
-  const isUser = /^[A-Za-z0-9._]{2,30}$/.test(user);
-  if (p.includes('instagram') && isUser) return { label: 'Chat', chat: 'https://ig.me/m/' + encodeURIComponent(user), profile: 'https://www.instagram.com/' + encodeURIComponent(user) + '/' };
-  if (p.includes('instagram')) return { label: 'Chat', inbox: 'https://www.instagram.com/direct/inbox/', search: raw || oname(o) }; // v127: IG bez korisničkog imena
-  if (p.includes('tiktok') && isUser) return { label: 'TikTok', chat: 'https://www.tiktok.com/@' + encodeURIComponent(user), profile: 'https://www.tiktok.com/@' + encodeURIComponent(user) };
-  if (p.includes('facebook')) return { label: 'Chat', inbox: 'https://business.facebook.com/latest/inbox/all', search: raw || oname(o) };
-  if (p.includes('tiktok')) return { label: 'TikTok', inbox: 'https://www.tiktok.com/messages', search: raw || oname(o) };
-  return { label: 'Chat', inbox: 'https://business.facebook.com/latest/inbox/all', search: raw || oname(o) };
+  const isUser = /^[A-Za-z0-9._]{2,30}$/.test(user), U = encodeURIComponent(user);
+  if (p.includes('instagram') && isUser) return { label: 'Chat', chat: appLink('https://ig.me/m/' + U, APP.ig, 'https://www.instagram.com/' + U + '/'), profile: appLink('https://www.instagram.com/_u/' + U + '/', APP.ig) };
+  if (p.includes('instagram')) return { label: 'Chat', inbox: appLink('https://www.instagram.com/direct/inbox/', APP.ig), search: raw || oname(o) };
+  if (p.includes('tiktok') && isUser) return { label: 'TikTok', chat: appLink('https://www.tiktok.com/@' + U, APP.tt), profile: appLink('https://www.tiktok.com/@' + U, APP.tt) };
+  if (p.includes('tiktok')) return { label: 'TikTok', inbox: appLink('https://www.tiktok.com/messages', APP.tt), search: raw || oname(o) };
+  return { label: 'Chat', inbox: appLink('https://business.facebook.com/latest/inbox/all', APP.mbs), search: raw || oname(o) };
 }
-function openChat(o) {
-  const s = social(o);
-  if (s.chat) { window.open(s.chat, '_blank', 'noopener'); return; }
-  const go2 = () => window.open(s.inbox, '_blank', 'noopener');
-  (navigator.clipboard ? navigator.clipboard.writeText(s.search) : Promise.reject()).then(() => { toast('📋 „' + s.search + '“ kopirano – zalijepi u pretragu inboxa', 3000); setTimeout(go2, 700); }, go2);
-}
+const linkAttrs = l => 'href="' + esc(l.href) + '"' + (l.ext ? ' target="_blank" rel="noopener"' : '');
 function copy(t) { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('📋 Kopirano'), () => prompt('Kopiraj:', t)); }
 function statusSheet(id) {
   const o = D.orders.find(x => String(x.id) === String(id)); if (!o) return;
