@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v76 | 2026-06-08 -->
+<!-- MAUROS VERSION: PWA v124 | 2026-11-19 | instalabilna PWA (manifest+sw+ikone), novi statusi, BOX NOW status, rok bez alarma kad je poslano, delivered => Isporučeno -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -10,6 +10,8 @@
 <meta name="apple-mobile-web-app-title" content="Mauros">
 <title>Mauros Design</title>
 <link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -97,6 +99,10 @@ html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-s
 .order-row-main { flex: 1; min-width: 0; }
 .order-name { font-weight: 600; font-size: 14px; }
 .order-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.rok-pill { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.rok-ok { background: #dcfce7; color: #15803d; }
+.rok-soon { background: #fef3c7; color: #92400e; }
+.rok-late { background: #fee2e2; color: #b91c1c; }
 .age-pill { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: 'DM Mono', monospace; white-space: nowrap; flex-shrink: 0; }
 .age-ok { background: #dcfce7; color: #15803d; }
 .age-warn { background: #fef3c7; color: #92400e; }
@@ -230,6 +236,7 @@ html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-s
       <div class="sync-dot" id="sync-dot"></div>
       <span id="sync-label">Sinkronizirano</span>
     </div>
+    <button onclick="mAuthLogout()" title="Odjava" style="background:none;border:none;font-size:16px;padding:6px;cursor:pointer;color:var(--muted)">⎋</button>
   </div>
 
   <!-- CONTENT AREA -->
@@ -251,10 +258,12 @@ html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-s
       <div class="filter-chips" id="status-chips">
         <div class="chip active" onclick="setStatusFilter('')" data-status="">Sve</div>
         <div class="chip" onclick="setStatusFilter('Novo')" data-status="Novo">Novo</div>
-        <div class="chip" onclick="setStatusFilter('U pripremi')" data-status="U pripremi">U pripremi</div>
+        <div class="chip" onclick="setStatusFilter('Print poslan')" data-status="Print poslan">Print poslan</div>
+        <div class="chip" onclick="setStatusFilter('U izradi')" data-status="U izradi">U izradi</div>
         <div class="chip" onclick="setStatusFilter('Završeno')" data-status="Završeno">Završeno</div>
         <div class="chip" onclick="setStatusFilter('Poslano')" data-status="Poslano">Poslano</div>
-        <div class="chip" onclick="setStatusFilter('Isporuceno')" data-status="Isporuceno">Isporučeno</div>
+        <div class="chip" onclick="setStatusFilter('Isporučeno')" data-status="Isporučeno">Isporučeno</div>
+        <div class="chip" onclick="setStatusFilter('Problem')" data-status="Problem">Problem</div>
       </div>
       <div id="orders-list"></div>
     </div>
@@ -333,28 +342,105 @@ html, body { height: 100%; background: var(--bg); font-family: 'DM Sans', sans-s
 <div id="toast"></div>
 
 <script>
+// v124: ako preglednik ne da lokalnu pohranu, radi s privremenom (aplikacija se ne smije srušiti)
+(function(){ try { window.localStorage.getItem('x'); } catch(e) {
+  var mem = {}; var shim = { getItem:function(k){return k in mem?mem[k]:null;}, setItem:function(k,v){mem[k]=String(v);}, removeItem:function(k){delete mem[k];}, clear:function(){mem={};} };
+  try { Object.defineProperty(window, 'localStorage', { value: shim, configurable: true }); } catch(_) {}
+} })();
 const SUPABASE_URL = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
 
+// ── v124: PRIJAVA (Supabase Auth) ──
+const MAUTH_KEY = 'mauros_session_v1';
+let mSession = null;
+try { mSession = JSON.parse(localStorage.getItem(MAUTH_KEY) || 'null'); } catch(e) {}
+function mAuthSave(s) {
+  mSession = s;
+  try { if (s) localStorage.setItem(MAUTH_KEY, JSON.stringify(s)); else localStorage.removeItem(MAUTH_KEY); } catch(e) {}
+}
+async function mAuthToken(grant, body) {
+  const r = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=' + grant, { method: 'POST', headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || !d.access_token) throw new Error(d.error_description || d.msg || d.error || ('HTTP ' + r.status));
+  if (!d.expires_at) d.expires_at = Math.floor(Date.now() / 1000) + (d.expires_in || 3600);
+  return d;
+}
+let _mRefreshing = null;
+async function mAuthEnsure() {
+  if (!mSession) { mAuthShow(); return false; }
+  if (mSession.expires_at - Date.now() / 1000 > 120) return true;
+  if (!_mRefreshing) _mRefreshing = mAuthToken('refresh_token', { refresh_token: mSession.refresh_token })
+    .then(d => { mAuthSave(d); return true; })
+    .catch(() => { mAuthSave(null); mAuthShow(); return false; })
+    .finally(() => { _mRefreshing = null; });
+  return _mRefreshing;
+}
+function mAuthShow(msg) {
+  let el = document.getElementById('mauth-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'mauth-overlay';
+    el.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(15,15,26,.94);display:flex;align-items:center;justify-content:center;padding:16px';
+    el.innerHTML = '<form id="mauth-form" style="background:#fff;border-radius:18px;padding:24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px;color:#1a1a1a;font-family:inherit">'
+      + '<div style="font-size:20px;font-weight:700">MaurOS · prijava</div>'
+      + '<input id="mauth-email" type="email" autocomplete="username" inputmode="email" placeholder="E-mail" required style="padding:13px 14px;border:1.5px solid #e8e4de;border-radius:12px;font:inherit;font-size:16px">'
+      + '<input id="mauth-pass" type="password" autocomplete="current-password" placeholder="Lozinka" required style="padding:13px 14px;border:1.5px solid #e8e4de;border-radius:12px;font:inherit;font-size:16px">'
+      + '<div id="mauth-msg" style="font-size:13px;color:#b91c1c;min-height:18px"></div>'
+      + '<button type="submit" style="padding:13px;border:none;border-radius:12px;background:#2563eb;color:#fff;font:inherit;font-weight:700;font-size:16px">Prijava</button>'
+      + '</form>';
+    document.body.appendChild(el);
+    document.getElementById('mauth-form').addEventListener('submit', mAuthLogin);
+  }
+  el.style.display = 'flex';
+  document.getElementById('mauth-msg').textContent = msg || '';
+}
+async function mAuthLogin(e) {
+  if (e) e.preventDefault();
+  const msg = document.getElementById('mauth-msg');
+  msg.style.color = '#8a8a8a'; msg.textContent = 'Prijavljujem…';
+  try {
+    const d = await mAuthToken('password', { email: document.getElementById('mauth-email').value.trim(), password: document.getElementById('mauth-pass').value });
+    mAuthSave(d);
+    document.getElementById('mauth-pass').value = '';
+    document.getElementById('mauth-overlay').style.display = 'none';
+    loadAll();
+  } catch(err) {
+    msg.style.color = '#b91c1c';
+    msg.textContent = /invalid/i.test(err.message) ? 'Pogrešan e-mail ili lozinka.' : ('Greška: ' + err.message);
+  }
+}
+function mAuthLogout() {
+  if (!confirm('Odjaviti se s ovog mobitela?')) return;
+  const t = mSession && mSession.access_token;
+  if (t) fetch(SUPABASE_URL + '/auth/v1/logout', { method: 'POST', headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + t } }).catch(() => {});
+  mAuthSave(null);
+  try { localStorage.removeItem('mauros_orders_v3'); localStorage.removeItem('mauros_stock_v1'); } catch(e) {}
+  orders = []; stock = [];
+  mAuthShow();
+}
+
 const api = {
   async req(method, path, body) {
+    if (!(await mAuthEnsure())) throw new Error('Prijava potrebna');
     setSyncing(true);
     try {
       const r = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
         method, headers: {
-          'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY,
-          'Content-Type': 'application/json', 'Prefer': method==='POST'?'return=representation':'return=representation'
+          'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + mSession.access_token,
+          'Content-Type': 'application/json', 'Prefer': method==='POST'?'resolution=merge-duplicates,return=representation':'return=representation'
         },
         body: body ? JSON.stringify(body) : undefined
       });
-      const data = await r.json();
+      if (r.status === 401) { mAuthSave(null); mAuthShow('Prijava je istekla – prijavi se ponovno.'); throw new Error('401'); }
+      const data = r.status === 204 ? null : await r.json().catch(() => null);
+      if (!r.ok) { setSynced(false); throw new Error((data && (data.message || data.hint)) || ('HTTP ' + r.status)); }
       setSynced(true);
       return data;
     } catch(e) { setSynced(false); throw e; }
     finally { setSyncing(false); }
   },
-  getOrders: () => api.req('GET', 'orders?order=inserted_at.desc&limit=500'),
-  getStock:  () => api.req('GET', 'stock?order=inserted_at.desc&limit=500'),
+  getOrders: () => api.req('GET', 'orders?order=inserted_at.desc&limit=5000'),
+  getStock:  () => api.req('GET', 'stock?order=inserted_at.desc&limit=5000'),
   saveOrder: (o) => api.req('POST', 'orders?on_conflict=id', o),
   saveStock: (s) => api.req('POST', 'stock?on_conflict=id', s),
   deleteOrder: (id) => api.req('DELETE', 'orders?id=eq.'+id),
@@ -399,7 +485,62 @@ function agePill(days) {
   const cls = days>5?'age-red':days>3?'age-warn':'age-ok';
   return '<span class="age-pill '+cls+'">'+days+'d</span>';
 }
-const STATUS_COLOR = {Novo:'#2563eb','U pripremi':'#d97706','Završeno':'#16a34a',Poslano:'#8b5cf6',Isporuceno:'#64748b',Problem:'#dc2626'};
+const STATUS_COLOR = {Novo:'#2563eb','Print poslan':'#16a34a','U izradi':'#d97706','Završeno':'#92400e',Poslano:'#0891b2','Isporučeno':'#15803d',Problem:'#dc2626',Otkazano:'#64748b'};
+// v124: isti statusi kao desktop; stari nazivi se prevode (samo u memoriji)
+const STATUSI = ['Novo','Print poslan','U izradi','Završeno','Poslano','Isporučeno','Problem'];
+const STATUS_MAP = {'Printano':'Print poslan','U pripremi':'U izradi','Isporuceno':'Isporučeno'};
+function normStatuses(arr){ (arr||[]).forEach(o=>{ if(o&&STATUS_MAP[o.status]) o.status=STATUS_MAP[o.status]; }); return arr; }
+function isDone(o){ return o.status==='Poslano'||o.status==='Isporučeno'||o.status==='Otkazano'; }
+
+// v124: BOX NOW status pošiljke
+const BN_ST = {
+  'new':['📦 Čeka predaju','#f1f5f9','#475569'],
+  'in-depot':['🚚 U dostavi','#e0f2fe','#0369a1'],
+  'in-transit':['🚚 U dostavi','#e0f2fe','#0369a1'],
+  'accepted-for-delivery':['🚚 U dostavi','#e0f2fe','#0369a1'],
+  'accepted-to-locker':['🚚 Preuzeto','#e0f2fe','#0369a1'],
+  'in-final-destination':['📬 U paketomatu','#fef3c7','#b45309'],
+  'delivered':['✅ Dostavljeno','#dcfce7','#15803d'],
+  'returned':['↩ Vraćeno','#fee2e2','#b91c1c'],
+  'expired':['⌛ Isteklo','#fee2e2','#b91c1c'],
+  'lost':['❗ Izgubljeno','#fee2e2','#b91c1c'],
+  'canceled':['✖ Poništeno','#fee2e2','#b91c1c']
+};
+function bnBadge(o){
+  if(!o||!o.tracking||!o.boxnow_status) return '';
+  const st=String(o.boxnow_status).toLowerCase();
+  const m=BN_ST[st]||['📦 '+st,'#f1f5f9','#475569'];
+  return '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:'+m[1]+';color:'+m[2]+';white-space:nowrap">'+m[0]+'</span>';
+}
+// v124: paket stvarno poslan => nema alarma za rok
+const BN_POSLANO=['in-depot','in-transit','accepted-for-delivery','accepted-to-locker','in-final-destination','delivered'];
+function isShipped(o){
+  if(!o) return false;
+  if(o.status==='Poslano'||o.status==='Isporučeno') return true;
+  return !!(o.tracking&&BN_POSLANO.includes(String(o.boxnow_status||'').toLowerCase()));
+}
+function rokBadge(o){
+  if(!o||!o.rok_isporuke) return '';
+  if(o.status==='Isporučeno') return '<span class="rok-pill rok-ok">✓ isporučeno</span>';
+  if(isShipped(o)) return '<span class="rok-pill rok-ok">🚚 poslano</span>';
+  const rok=new Date(o.rok_isporuke); if(isNaN(rok)) return '';
+  const today=new Date(); today.setHours(0,0,0,0); rok.setHours(0,0,0,0);
+  const diff=Math.round((rok-today)/86400000);
+  const fmt=rok.getDate()+'.'+(rok.getMonth()+1)+'.';
+  if(diff<0) return '<span class="rok-pill rok-late">⚠ '+fmt+' kasni '+Math.abs(diff)+'d</span>';
+  if(diff===0) return '<span class="rok-pill rok-late">🔴 rok DANAS</span>';
+  if(diff<=2) return '<span class="rok-pill rok-soon">🟡 '+fmt+' ('+diff+'d)</span>';
+  return '<span class="rok-pill rok-ok">📅 '+fmt+'</span>';
+}
+// v124: BOX NOW "delivered" => status Isporučeno (upisuje se u Supabase)
+function applyBoxnowDelivered(){
+  (orders||[]).forEach(o=>{
+    if(!o||String(o.boxnow_status||'').toLowerCase()!=='delivered') return;
+    if(o.status==='Isporučeno'||o.status==='Otkazano') return;
+    o.status='Isporučeno';
+    api.updateOrder(o.id,{status:'Isporučeno'}).catch(()=>{});
+  });
+}
 
 // ── NAVIGATION ──
 function showPage(p) {
@@ -422,7 +563,7 @@ function showPage(p) {
 // ── LOAD DATA ──
 async function loadAll() {
   // Step 1: Load from localStorage immediately
-  try { orders = JSON.parse(localStorage.getItem('mauros_orders_v3')||'[]'); } catch(e) { orders=[]; }
+  try { orders = normStatuses(JSON.parse(localStorage.getItem('mauros_orders_v3')||'[]')); } catch(e) { orders=[]; }
   try { stock  = JSON.parse(localStorage.getItem('mauros_stock_v1') ||'[]'); } catch(e) { stock=[]; }
   renderDashboard();
   updateBadge();
@@ -431,7 +572,8 @@ async function loadAll() {
   try {
     const [o, s] = await Promise.all([api.getOrders(), api.getStock()]);
     if(Array.isArray(o) && o.length) {
-      orders = o;
+      orders = normStatuses(o);
+      applyBoxnowDelivered(); // v124
       try { localStorage.setItem('mauros_orders_v3', JSON.stringify(orders)); } catch(e) {}
     }
     if(Array.isArray(s) && s.length) {
@@ -446,7 +588,7 @@ async function loadAll() {
 }
 
 function updateBadge() {
-  const active = orders.filter(o=>o.status!=='Poslano'&&o.status!=='Isporuceno').length;
+  const active = orders.filter(o=>!isDone(o)).length;
   const badge = document.getElementById('nav-badge');
   if(active>0) { badge.textContent=active; badge.style.display=''; }
   else badge.style.display='none';
@@ -457,8 +599,8 @@ function renderDashboard() {
   const now = new Date();
   const hr = now.getHours();
   const greet = hr<12?'Dobro jutro 👋':hr<18?'Dobar dan 👋':'Dobra večer 👋';
-  const active = orders.filter(o=>o.status!=='Poslano'&&o.status!=='Isporuceno');
-  const unpaid = orders.filter(o=>o.paid==='Ne'&&o.status!=='Isporuceno');
+  const active = orders.filter(o=>!isDone(o));
+  const unpaid = orders.filter(o=>o.paid==='Ne'&&o.status!=='Isporučeno'&&o.status!=='Otkazano');
   const urgent = active.filter(o=>(daysSince(o.created)||0)>5);
   const thisMonth = orders.filter(o=>{
     const d = parseHRDate(o.created);
@@ -507,7 +649,8 @@ function renderDashboard() {
         '</div>'+
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'+
           '<span style="font-size:11px;font-weight:700;color:'+sc+'">'+esc(o.status)+'</span>'+
-          agePill(days)+
+          (o.rok_isporuke ? rokBadge(o) : agePill(days))+
+          bnBadge(o)+
         '</div>'+
       '</div>';
     });
@@ -563,7 +706,8 @@ function renderOrders() {
       '</div>'+
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'+
         '<span style="font-size:11px;font-weight:700;color:'+sc+'">'+esc(o.status)+'</span>'+
-        agePill(days)+
+        (o.rok_isporuke ? rokBadge(o) : agePill(days))+
+        bnBadge(o)+
       '</div>'+
     '</div>';
   });
@@ -655,7 +799,7 @@ function showDetail(id) {
   html += '<div style="display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border)">';
   html += '<button class="btn btn-primary" style="flex:1" onclick="openOrderModal(\''+esc(o.id)+'\')">✏️ Uredi</button>';
   html += '<select onchange="changeOrderStatus(\''+esc(o.id)+'\',this.value)" style="flex:1;padding:10px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--bg2);font-family:inherit;font-size:13px;font-weight:600;color:'+sc+'">';
-  ['Novo','U pripremi','Završeno','Poslano','Isporuceno','Problem'].forEach(s=>{
+  STATUSI.forEach(s=>{
     html += '<option value="'+s+'"'+(o.status===s?' selected':'')+'>'+s+'</option>';
   });
   html += '</select>';
@@ -671,7 +815,9 @@ function showDetail(id) {
     ['Privjesci', o.privjesci],
     ['Cijena', o.cijena?'€'+o.cijena:null],
     ['Plaćeno', o.paid],
+    ['Rok isporuke', o.rok_isporuke ? (new Date(o.rok_isporuke).toLocaleDateString('hr-HR')) : null],
     ['Tracking broj', o.tracking],
+    ['BOX NOW status', o.boxnow_status ? (BN_ST[String(o.boxnow_status).toLowerCase()]||[o.boxnow_status])[0] : null],
     ['Primatelj', o.dostava_ime],
     ['Ulica', o.ulica],
     ['Grad', (o.grad||'')+(o.pbr?' '+o.pbr:'')],
@@ -721,10 +867,9 @@ async function confirmDeleteOrder(id) {
 }
 
 // ── ORDER MODAL ──
-const OKVIR_OPTIONS = ['F1 okvir vozac i staza','F1 okvir vozaca','F1 staza','F1 3d podmjetaci','F1 privjesak','F1 kalendar','F1 lego stalak'];
+const OKVIR_OPTIONS = ['F1 okvir vozac i staza','F1 okvir vozaca','F1 staza','F1 3d podmjetaci','F1 privjesak','F1 kalendar','F1 lego stalak','F1 bozicna kuglica'];
 const VOZACI = ['Max Verstappen','Charles Leclerc','Lewis Hamilton','Lando Norris','Oscar Piastri','George Russell','Andrea Kimi Antonelli','Carlos Sainz','Fernando Alonso','Lance Stroll','Pierre Gasly','Esteban Ocon','Yuki Tsunoda','Liam Lawson','Nico Hülkenberg','Gabriel Bortoleto','Oliver Bearman','Isack Hadjar','Alexander Albon','Jack Doohan','Ayrton Senna','Michael Schumacher','Niki Lauda','Alain Prost','Kimi Räikkönen','Mika Häkkinen','Daniel Ricciardo'];
 const PRIV_VOZACI = [{name:'Max Verstappen',code:'VER'},{name:'Charles Leclerc',code:'LEC'},{name:'Lewis Hamilton',code:'HAM'},{name:'Lando Norris',code:'NOR'},{name:'Oscar Piastri',code:'PIA'},{name:'George Russell',code:'RUS'},{name:'Kimi Antonelli',code:'ANT'},{name:'Carlos Sainz',code:'SAI'},{name:'Fernando Alonso',code:'ALO'},{name:'Ayrton Senna',code:'SEN'},{name:'Michael Schumacher',code:'MSC'},{name:'Niki Lauda',code:'LAU'}];
-const STATUSI = ['Novo','U pripremi','Završeno','Poslano','Isporuceno','Problem'];
 const PLATFORME = ['Instagram','Facebook','TikTok','Osobno','Preporuka'];
 const GODINE = Array.from({length:51},(_,i)=>(2025-i).toString());
 
@@ -824,7 +969,7 @@ function onOkvirChangeMob() {
   const val = document.getElementById('m-okvir')?.value||'';
   const is3d = val==='F1 3d podmjetaci';
   const isPriv = val==='F1 privjesak';
-  const isKal = val==='F1 kalendar','F1 lego stalak';
+  const isKal = val==='F1 kalendar'||val==='F1 lego stalak'; // v124: ispravljena sintaksna greška (cijela aplikacija se nije pokretala)
   const isNorm = !is3d&&!isPriv&&!isKal;
   const sv = isNorm&&(val==='F1 okvir vozac i staza'||val==='F1 okvir vozaca');
   const ss = isNorm&&(val==='F1 okvir vozac i staza'||val==='F1 staza');
@@ -1063,11 +1208,10 @@ document.addEventListener('touchend', function(e) {
 // ── INIT ──
 loadAll();
 
-// Unregister any old service workers to prevent caching issues
-if('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function(regs) {
-    regs.forEach(function(reg) { reg.unregister(); });
-  });
+// v124: service worker je potreban da bi se aplikacija mogla instalirati na Android.
+// sw.js uvijek prvo ide na mrežu (nova verzija odmah), a cache koristi samo kad nema interneta.
+if('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(function(e){ console.warn('SW', e); });
 }
 </script>
 
@@ -1091,10 +1235,11 @@ if('serviceWorker' in navigator) {
 
 var BOARD_COLS = [
   {key:'Novo',       label:'Novo',        color:'#2563eb', bg:'#eff6ff'},
-  {key:'U pripremi', label:'U pripremi',  color:'#d97706', bg:'#fffbeb'},
-  {key:'Završeno',   label:'Završeno',    color:'#7c3aed', bg:'#f5f3ff'},
+  {key:'Print poslan', label:'Print poslan', color:'#16a34a', bg:'#f0fdf4'},
+  {key:'U izradi',   label:'U izradi',    color:'#d97706', bg:'#fffbeb'},
+  {key:'Završeno',   label:'Završeno',    color:'#92400e', bg:'#fef3c7'},
   {key:'Poslano',    label:'Poslano',     color:'#0891b2', bg:'#ecfeff'},
-  {key:'Isporuceno', label:'Isporučeno',  color:'#16a34a', bg:'#f0fdf4'},
+  {key:'Isporučeno', label:'Isporučeno',  color:'#15803d', bg:'#f0fdf4'},
   {key:'Problem',    label:'Problem',     color:'#dc2626', bg:'#fff1f2'},
 ];
 
@@ -1158,7 +1303,7 @@ function renderBoard() {
           + '<div style="font-size:11px;color:#8a8a8a;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(parts || '—') + '</div>'
           + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
           + '<span style="font-family:monospace;font-size:12px;font-weight:600">€' + parseFloat(o.cijena || 0).toFixed(2) + '</span>'
-          + agePill(d) + unpaid
+          + (o.rok_isporuke ? rokBadge(o) : agePill(d)) + unpaid + bnBadge(o)
           + '</div>'
           + tracking
           + '</div>';
