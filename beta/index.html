@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v129 | 2026-11-19 | gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<!-- MAUROS VERSION: PWA v130 | 2026-11-19 | "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -18,14 +18,14 @@
 :root{
   --bg:#f3f2ef;--card:#ffffff;--card2:#f7f6f3;--ink:#111111;--ink2:#4b4b4f;--mute:#8e8e93;--line:#e9e6e0;
   --acc:#111111;--accInk:#ffffff;--red:#e10600;--redBg:#fde8e7;--green:#15803d;--greenBg:#e3f5e9;
-  --amber:#b45309;--amberBg:#fdf1dc;--blue:#1d4ed8;--blueBg:#e4ebfd;--teal:#0e7490;--tealBg:#dff4f8;
+  --amber:#b45309;--amberBg:#fdf1dc;--rdBg:#fde68a;--rdLine:#f59e0b;--blue:#1d4ed8;--blueBg:#e4ebfd;--teal:#0e7490;--tealBg:#dff4f8;
   --violet:#6d28d9;--violetBg:#eee8fc;--r:18px;--rs:12px;
   --sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px);--tab:62px;
   --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);
 }
 @media (prefers-color-scheme: dark){:root{
   --bg:#0c0c0e;--card:#17171a;--card2:#1f1f23;--ink:#f4f4f5;--ink2:#c2c2c7;--mute:#85858c;--line:#2a2a2f;
-  --acc:#ffffff;--accInk:#111111;--redBg:#3a1513;--greenBg:#12301d;--amberBg:#35260f;--blueBg:#172446;--tealBg:#0f2d33;--violetBg:#271a45;
+  --acc:#ffffff;--accInk:#111111;--redBg:#3a1513;--greenBg:#12301d;--amberBg:#35260f;--rdBg:#4a3608;--rdLine:#d97706;--blueBg:#172446;--tealBg:#0f2d33;--violetBg:#271a45;
   --shadow:none;}}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;overscroll-behavior:none}
@@ -147,6 +147,12 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .btn{width:100%;padding:15px;border-radius:15px;background:var(--acc);color:var(--accInk);font-weight:700;font-size:16px}
 .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
 .btn:disabled{opacity:.5}
+/* v130: Radim sad */
+.bcard.radim{background:var(--rdBg);border:2px solid var(--rdLine)}
+.row.radim{background:var(--rdBg);box-shadow:inset 4px 0 0 var(--rdLine)}
+.p-rd{background:var(--rdLine);color:#fff}
+.rdbtn{margin:10px 16px 0;width:calc(100% - 32px)}
+.rdbtn.on{background:var(--rdLine);color:#fff;border-color:var(--rdLine)}
 /* sheet */
 #sb{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
 #sb.on{opacity:1;pointer-events:auto}
@@ -237,7 +243,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 /* ═════════ OSNOVA ═════════ */
 const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
-const VERSION = 'v129';
+const VERSION = 'v130';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
@@ -452,14 +458,18 @@ async function syncBoxnow() {
   finally { bnSyncing = false; renderAll(); }
 }
 const paidPill = o => o.paid === 'Da' ? '' : pill('Neplaćeno', 'red');
+// v130: narudžbe na kojima sad radiš (orders.radim = 'Da')
+const isRadim = o => o.radim === 'Da' && !done(o);
+const rdPill = '<span class="pill p-rd">🔨 Radim</span>';
 function orderRow(o) {
   const sub = [o.vozac, short(o.staza), o.godina].filter(Boolean).join(' · ') || o.kuglice || o.privjesci || '';
-  return '<button class="row" data-open="' + esc(o.id) + '">' + avatar(o) + '<div class="rm"><div class="rt"><b>' + esc(oname(o)) + '</b><span class="price">' + eur2(o.cijena) + '</span></div>'
+  return '<button class="row' + (isRadim(o) ? ' radim' : '') + '" data-open="' + esc(o.id) + '">' + avatar(o) + '<div class="rm"><div class="rt"><b>' + esc(oname(o)) + '</b><span class="price">' + eur2(o.cijena) + '</span></div>'
     + '<div class="rs">' + esc(prod(o)) + (sub ? ' · ' + esc(sub) : '') + '</div>'
-    + '<div class="pills">' + stPill(o) + rokPill(o) + bnPill(o) + paidPill(o) + '</div></div></button>';
+    + '<div class="pills">' + (isRadim(o) ? rdPill : '') + stPill(o) + rokPill(o) + bnPill(o) + paidPill(o) + '</div></div></button>';
 }
 const QF = {
   aktivne: { l: 'Aktivne', f: o => !done(o) },
+  radim: { l: 'Radim sad', f: isRadim },
   neplaceno: { l: 'Neplaćeno', f: o => o.paid !== 'Da' && o.status !== 'Otkazano' },
   kasni: { l: 'Kasni', f: isLate },
   uskoro: { l: 'Rok ≤ 3 dana', f: o => { if (shipped(o)) return false; const r = rokInfo(o); return !!r && r.diff >= 0 && r.diff <= 3; } },
@@ -563,6 +573,9 @@ function renderHome() {
     + tile('paketomat', 'U paketomatu', c('paketomat').length, c('dostava').length + ' u dostavi')
     + '</div><button class="btn ghost bnsync" style="margin-top:10px" onclick="syncBoxnow()">🔄 Osvježi BOX NOW statuse</button>'
     + '<div class="note" style="text-align:center">' + (LS.get('m5_bnsync', null) ? 'Zadnja provjera ' + new Date(LS.get('m5_bnsync')).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' }) + ' · ' : '') + 'automatski svaki sat</div></div>';
+  // v130: radim sad
+  const rd = c('radim').sort(byRok);
+  if (rd.length) html += '<div class="sec"><div class="sec-h"><h2>🔨 Radim sad · ' + rd.length + '</h2>' + (rd.length > 6 ? '<a data-qf="radim">Sve ›</a>' : '') + '</div><div class="card">' + rd.slice(0, 6).map(orderRow).join('') + '</div></div>';
   // ovaj mjesec
   const now = new Date(), mk = ymKey(now), pm = ymKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
   const m = monthStats(mk), p = monthStats(pm);
@@ -662,6 +675,7 @@ function drawOrder(el) {
     + (() => { const s = social(o); return '<a class="act" ' + linkAttrs(s.chat || s.inbox) + (s.chat ? '' : ' data-search="' + esc(s.search) + '"') + '><span class="i">💬</span>' + esc(s.label) + '</a>'; })()
     + '<button class="act" data-a="copy"><span class="i">📋</span>' + (o.tracking ? 'Tracking' : 'Kopiraj') + '</button>'
     + '</div>'
+    + (done(o) ? '' : '<button class="btn ghost rdbtn' + (o.radim === 'Da' ? ' on' : '') + '" data-a="radim">' + (o.radim === 'Da' ? '🔨 Radim sad – dodirni za kraj' : '🔨 Označi: radim sad') + '</button>')
     + card('Proizvod', kv('Proizvod', prod(o)) + kv('Vozač', o.vozac) + kv('Staza', o.staza) + kv('Godina', o.godina) + kv('Tekst', o.tekst) + kv('Posveta', o.posveta === 'Da' ? (o.posveta_tekst || 'Da') : '') + kv('Kuglice', o.kuglice) + kv('Privjesci', o.privjesci) + kv('Stanje bolida', o.bolid_stanje))
     + card('Kupac', kv('Ime', o.fullname) + kv('Profil', o.name, false, social(o).profile ? ' <a class="copy" ' + linkAttrs(social(o).profile) + '>otvori ›</a>' : '') + kv('Platforma', o.platform) + kv('Mobitel', o.tel, false, tel ? ' <a class="copy" href="tel:' + esc(tel) + '">nazovi</a>' : '') + kv('E-mail', o.email))
     + card('Dostava', kv('Rok isporuke', r ? fmtD(r.d) + (shipped(o) ? '' : r.diff < 0 ? ' (kasni ' + (-r.diff) + 'd)' : ' (za ' + r.diff + 'd)') : '') + kv('Paketomat', o.boxnow) + kv('BOX NOW ID', o.tracking, true, o.tracking ? ' <span class="copy" data-copy="' + esc(o.tracking) + '">kopiraj</span>' : '') + kv('BOX NOW status', bnTxt) + kv('Primatelj', o.dostava_ime) + kv('Adresa', o.adresa || [o.ulica, o.pbr, o.grad].filter(Boolean).join(', ')))
@@ -675,6 +689,7 @@ function drawOrder(el) {
     const a = e.target.closest('[data-a]'); if (!a) return; haptic();
     if (a.dataset.a === 'status') statusSheet(o.id);
     if (a.dataset.a === 'paid') { const to = o.paid === 'Da' ? 'Ne' : 'Da'; if (confirm(to === 'Da' ? 'Označiti kao PLAĆENO?' : 'Vratiti na NEPLAĆENO?')) { patchOrder(o.id, { paid: to }); toast(to === 'Da' ? '✅ Plaćeno' : 'Neplaćeno'); } }
+    if (a.dataset.a === 'radim') { const to = o.radim === 'Da' ? 'Ne' : 'Da'; patchOrder(o.id, { radim: to }); toast(to === 'Da' ? '🔨 Radim sad' : 'Oznaka maknuta'); }
     if (a.dataset.a === 'copy') copy(o.tracking || [oname(o), prod(o), o.vozac, o.staza, o.godina, o.boxnow].filter(Boolean).join(' · '));
   };
 }
@@ -771,7 +786,7 @@ function renderBoard() {
   $('#subtitle').textContent = 'Povuci lijevo/desno · drži karticu za status';
   const cols = BCOLS.map(s => {
     let l = D.orders.filter(o => o.status === s);
-    l.sort(s === 'Isporučeno' || s === 'Poslano' ? (a, b) => (created(b) || 0) - (created(a) || 0) : byRok);
+    l.sort(s === 'Isporučeno' || s === 'Poslano' ? (a, b) => (created(b) || 0) - (created(a) || 0) : (a, b) => (isRadim(b) - isRadim(a)) || byRok(a, b)); // v130: Radim sad na vrh
     return { s, l, all: l.length };
   });
   const keepScroll = $('#btrack') ? $('#btrack').scrollLeft : null;
@@ -803,11 +818,11 @@ function markBoard() {
 }
 function bcard(o) {
   const sub = [o.vozac, short(o.staza), o.godina].filter(Boolean).join(' · ') || o.kuglice || o.privjesci || '';
-  return '<div class="bcard" data-card="' + esc(o.id) + '" role="button"><button class="more-btn" data-move="' + esc(o.id) + '" aria-label="Status">⋯</button>'
+  return '<div class="bcard' + (isRadim(o) ? ' radim' : '') + '" data-card="' + esc(o.id) + '" role="button"><button class="more-btn" data-move="' + esc(o.id) + '" aria-label="Status">⋯</button>'
     + '<div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)">' + esc(prod(o)) + '</div>'
     + '<div style="font-weight:650;font-size:15px;margin-top:2px;padding-right:30px">' + esc(oname(o)) + '</div>'
     + (sub ? '<div class="rs">' + esc(sub) + '</div>' : '')
-    + '<div class="pills"><span class="pill">' + eur2(o.cijena) + '</span>' + rokPill(o) + bnPill(o) + paidPill(o) + (isFrame(o) && o.hs_print === 'Da' && o.status === 'Novo' ? pill('🖨 HS') : '') + '</div></div>';
+    + '<div class="pills">' + (isRadim(o) ? rdPill : '') + '<span class="pill">' + eur2(o.cijena) + '</span>' + rokPill(o) + bnPill(o) + paidPill(o) + (isFrame(o) && o.hs_print === 'Da' && o.status === 'Novo' ? pill('🖨 HS') : '') + '</div></div>';
 }
 
 /* ── SKLADIŠTE ── */
