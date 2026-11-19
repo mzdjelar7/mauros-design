@@ -1,14 +1,14 @@
 {
   "name": "MaurOS Design",
   "short_name": "MaurOS",
-  "description": "MaurOS narudžbe, ploča i skladište",
+  "description": "MaurOS narudžbe, ploča, skladište i izvještaji",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f8f7f4",
-  "theme_color": "#0f0f1a",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "lang": "hr",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

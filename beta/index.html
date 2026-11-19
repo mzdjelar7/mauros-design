@@ -124,7 +124,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .hero h2{font-size:24px;font-weight:800;letter-spacing:-.5px}
 .hero .p{font-size:14px;color:var(--ink2);margin-top:3px}
 .actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 16px 4px}
-.act{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;font-weight:650;color:var(--ink2)}
+.act{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;font-weight:650;color:var(--ink2);text-decoration:none;text-align:center}
 .act .i{font-size:20px;line-height:1}
 .act:active{background:var(--card2)}
 .kv{display:flex;justify-content:space-between;gap:14px;padding:11px 16px;border-bottom:1px solid var(--line);font-size:14px}
@@ -947,7 +947,7 @@ function trendSvg(tm) {
     if (t.profit > 0) s += '<rect x="' + (x + w * .25) + '" y="' + y(t.profit) + '" width="' + w * .5 + '" height="' + Math.max(0, H - 22 - y(t.profit)) + '" rx="2" fill="#15803d" opacity="' + (t.sel ? .95 : .35) + '"/>';
     if (t.ads > 0) s += '<line x1="' + x + '" x2="' + (x + w) + '" y1="' + y(t.ads) + '" y2="' + y(t.ads) + '" stroke="#e10600" stroke-width="2.5" stroke-linecap="round" opacity="' + (t.sel ? 1 : .45) + '"/>';
     if (n <= 12 || i % 2 === 0) s += '<text x="' + (x + w / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="9" fill="currentColor" style="color:var(--mute)" opacity=".8">' + MJS[t.d.getMonth()] + '</text>';
-    if (t.sel && n <= 12) s += '<text x="' + (x + w / 2) + '" y="' + (y(t.rev) - 4) + '" text-anchor="middle" font-size="8.5" font-weight="700" fill="currentColor" style="color:var(--ink)">' + (t.rev >= 1000 ? (t.rev / 1000).toFixed(1) + 'k' : Math.round(t.rev)) + '</text>';
+    if (t.sel && n <= 12 && t.rev > 0) s += '<text x="' + (x + w / 2) + '" y="' + (y(t.rev) - 4) + '" text-anchor="middle" font-size="8.5" font-weight="700" fill="currentColor" style="color:var(--ink)">' + (t.rev >= 1000 ? (t.rev / 1000).toFixed(1) + 'k' : Math.round(t.rev)) + '</text>';
   });
   return s + '</svg>';
 }
