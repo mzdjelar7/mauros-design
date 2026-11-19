@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v128 | 2026-11-19 | Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<!-- MAUROS VERSION: PWA v129 | 2026-11-19 | gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -169,6 +169,8 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .track{height:8px;border-radius:5px;background:var(--card2);overflow:hidden}
 .fill{height:100%;border-radius:5px;background:var(--ink)}
 .chart svg{display:block;width:100%;height:auto}
+.markbtn{align-self:center;flex-shrink:0;font-size:11.5px;font-weight:650;line-height:1.2;padding:7px 10px;border-radius:10px;border:1.5px dashed var(--line);color:var(--ink2);background:var(--card)}
+.markbtn:active{background:var(--greenBg);color:var(--green);border-color:var(--green)}
 .chart svg text{pointer-events:none}
 .msel{display:flex;flex-direction:column;gap:2px;background:var(--card2);border-radius:12px;padding:9px 12px;margin-bottom:10px}
 .msel b{font-size:15px;text-transform:capitalize}.msel span{font-size:12.5px;color:var(--ink2)}
@@ -235,7 +237,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 /* ═════════ OSNOVA ═════════ */
 const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
-const VERSION = 'v128';
+const VERSION = 'v129';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
@@ -424,7 +426,31 @@ function rokPill(o) {
   if (r.diff <= 3) return pill('⏳ ' + f + ' · ' + r.diff + 'd', 'amber');
   return pill('📅 ' + f);
 }
-function bnPill(o) { if (!o.tracking || !o.boxnow_status) return ''; const m = BN[bn(o)] || [bn(o), '']; return pill('📦 ' + m[0], m[1]); }
+// v129: uz status i vrijeme promjene (npr. kad je stiglo u paketomat)
+const bnWhen = o => { if (!o.boxnow_updated_at || bn(o) === 'new') return ''; const d = new Date(o.boxnow_updated_at); return isNaN(d) ? '' : ' · ' + d.getDate() + '.' + (d.getMonth() + 1) + '. ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+function bnPill(o) { if (!o.tracking || !o.boxnow_status) return ''; const m = BN[bn(o)] || [bn(o), '']; return pill('📦 ' + m[0] + bnWhen(o), m[1]); }
+// v129: osvježi BOX NOW statuse (isto kao gumb u dashboardu)
+let bnSyncing = false;
+async function syncBoxnow() {
+  if (bnSyncing) return; bnSyncing = true; haptic(); toast('🔄 Provjeravam BOX NOW…', 4000);
+  document.querySelectorAll('.bnsync').forEach(b => { b.disabled = true; b.textContent = '🔄 Provjeravam BOX NOW…'; });
+  try {
+    if (!(await authEnsure())) throw new Error('Prijava potrebna');
+    const r = await fetch(SB + '/functions/v1/boxnow', { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + S.access_token, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'sync-status' }) });
+    const d = await r.json().catch(() => ({}));
+    if (!d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+    LS.set('m5_bnsync', Date.now());
+    await loadAll(true);
+    const ch = (d.changes || []).map(c => { const o = D.orders.find(x => String(x.id) === String(c.id)); return { o, to: String(c.to || '').toLowerCase() }; }).filter(c => c.o);
+    const lbl = s => (BN[s] || [s])[0];
+    openSheet('BOX NOW · ' + (ch.length ? ch.length + ' promjena' : 'bez promjena'),
+      (ch.length ? ch.map(c => '<button class="row" data-open="' + esc(c.o.id) + '">' + avatar(c.o) + '<div class="rm"><div class="rt"><b>' + esc(oname(c.o)) + '</b></div><div class="rs">' + esc(prod(c.o)) + '</div><div class="pills">' + pill('→ ' + lbl(c.to) + bnWhen(c.o), (BN[c.to] || ['', ''])[1]) + '</div></div></button>').join('') : '<div class="empty">Nema novih promjena statusa</div>')
+      + '<div class="note" style="margin:10px 18px">Provjereno ' + (d.parcels || 0) + ' pošiljki · ' + new Date().toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' }) + '</div>'
+      + '<div style="padding:4px 16px 12px"><button class="btn ghost" id="bnPak">📬 Tko je sad u paketomatu</button></div>',
+      b => b.querySelector('#bnPak').addEventListener('click', () => { closeTop(); setTimeout(() => qfSheet('paketomat'), 280); }));
+  } catch (e) { toast('⚠ BOX NOW: ' + e.message, 4000); }
+  finally { bnSyncing = false; renderAll(); }
+}
 const paidPill = o => o.paid === 'Da' ? '' : pill('Neplaćeno', 'red');
 function orderRow(o) {
   const sub = [o.vozac, short(o.staza), o.godina].filter(Boolean).join(' · ') || o.kuglice || o.privjesci || '';
@@ -535,7 +561,8 @@ function renderHome() {
     + tile('izrada', 'Za izradu', c('izrada').length, 'print poslan / u izradi')
     + tile('zaposlati', 'Za poslati', c('zaposlati').length, 'završeno, nije poslano', c('zaposlati').length ? 'blue' : '')
     + tile('paketomat', 'U paketomatu', c('paketomat').length, c('dostava').length + ' u dostavi')
-    + '</div></div>';
+    + '</div><button class="btn ghost bnsync" style="margin-top:10px" onclick="syncBoxnow()">🔄 Osvježi BOX NOW statuse</button>'
+    + '<div class="note" style="text-align:center">' + (LS.get('m5_bnsync', null) ? 'Zadnja provjera ' + new Date(LS.get('m5_bnsync')).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' }) + ' · ' : '') + 'automatski svaki sat</div></div>';
   // ovaj mjesec
   const now = new Date(), mk = ymKey(now), pm = ymKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
   const m = monthStats(mk), p = monthStats(pm);
@@ -560,7 +587,8 @@ function renderHome() {
   $('#v-home').querySelectorAll('[data-qf]').forEach(b => b.addEventListener('click', () => { haptic(); qfSheet(b.dataset.qf); }));
 }
 function qfSheet(k) {
-  const list = D.orders.filter(QF[k].f).sort(byRok);
+  const byBn = (a, b) => new Date(b.boxnow_updated_at || 0) - new Date(a.boxnow_updated_at || 0); // v129: paketi – najnovija promjena prva
+  const list = D.orders.filter(QF[k].f).sort(k === 'paketomat' || k === 'dostava' ? byBn : byRok);
   const sum = list.reduce((s, o) => s + num(o.cijena), 0);
   openSheet(QF[k].l + ' · ' + list.length, '<div class="note" style="margin:0 18px 8px">Ukupno ' + eur2(sum) + '</div>'
     + (list.length ? list.map(orderRow).join('') : '<div class="empty">Nema narudžbi</div>')
@@ -803,14 +831,17 @@ function renderStock() {
     const grp = {}; act.forEach(n => { const k = n.dobavljac + ' · ' + (n.narudzba_br || ''); (grp[k] = grp[k] || []).push(n); });
     html += Object.keys(grp).length ? Object.entries(grp).map(([k, l]) => {
       const n0 = l[0], tr = n0.tracking, eta = n0.eta_od ? new Date(n0.eta_od).toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric' }) + (n0.eta_do && n0.eta_do !== n0.eta_od ? '–' + new Date(n0.eta_do).toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric' }) : '') : 'bez ETA';
-      return '<div class="sec"><div class="sec-h"><h2 style="font-size:15px">' + esc(k) + '</h2><span class="pill p-' + (n0.status === 'Poslano' ? 'blue' : 'amber') + '">' + esc(n0.status) + '</span></div><div class="card">'
+      const stTxt = n0.status === 'Poslano' ? '🚚 Na putu (poslano)' : n0.status === 'Naručeno' ? '⏳ Naručeno – još nije poslano' : n0.status;
+      return '<div class="sec"><div class="sec-h"><h2 style="font-size:15px">' + esc(k) + '</h2></div><div class="card">'
+        + '<div class="kv"><span class="k">Status</span><span class="vv"><span class="pill p-' + (n0.status === 'Poslano' ? 'blue' : 'amber') + '">' + esc(stTxt) + '</span></span></div>'
+        + (n0.kurir ? '<div class="kv"><span class="k">Kurir</span><span class="vv">' + esc(n0.kurir) + '</span></div>' : '')
         + '<div class="kv"><span class="k">Dolazak</span><span class="vv">' + esc(eta) + '</span></div>'
         + (tr ? '<div class="kv"><span class="k">Tracking</span><span class="vv mono">' + esc(tr) + ' <span class="copy" data-copy="' + esc(tr) + '">kopiraj</span> <a class="copy" target="_blank" rel="noopener" href="' + trackUrl(tr, n0.kurir) + '">prati ›</a></span></div>' : '')
         + l.map(n => '<div class="row"><div class="av" style="background:var(--card2)">' + (n.kolicina || 1) + '×</div><div class="rm"><b style="font-size:14px">' + esc(n.opis || (n.vozac + ' ' + n.godina)) + '</b><div class="rs">' + esc([n.vozac, n.godina, n.cijena ? eur2(n.cijena) : '', n.note].filter(Boolean).join(' · ')) + '</div></div>'
-          + '<button class="pill p-green" data-arrived="' + n.id + '" style="align-self:center">Stiglo ✓</button></div>').join('')
+          + '<button class="markbtn" data-arrived="' + n.id + '">Označi<br>da je stiglo</button></div>').join('')
         + '</div></div>';
     }).join('') : '<div class="empty">Ništa nije na putu</div>';
-    if (old.length) html += '<div class="sec"><div class="sec-h"><h2>Stiglo</h2></div><div class="card">' + old.map(n => '<div class="row"><div class="av" style="background:var(--greenBg);color:var(--green)">✓</div><div class="rm"><b style="font-size:14px">' + esc(n.opis || n.vozac) + '</b><div class="rs">' + esc([n.dobavljac, (n.kolicina || 1) + ' kom', n.stiglo_at ? new Date(n.stiglo_at).toLocaleDateString('hr-HR') : ''].filter(Boolean).join(' · ')) + '</div></div></div>').join('') + '</div></div>';
+    if (old.length) html += '<div class="sec"><div class="sec-h"><h2>Stiglo (zaprimljeno)</h2></div><div class="card">' + old.map(n => '<div class="row"><div class="av" style="background:var(--greenBg);color:var(--green)">✓</div><div class="rm"><b style="font-size:14px">' + esc(n.opis || n.vozac) + '</b><div class="rs">' + esc([n.dobavljac, (n.kolicina || 1) + ' kom', n.stiglo_at ? new Date(n.stiglo_at).toLocaleDateString('hr-HR') : ''].filter(Boolean).join(' · ')) + '</div></div></div>').join('') + '</div></div>';
     html += '<div class="note" style="margin:14px 20px">Narudžbe dobavljača i tracking upisuje Claude iz Gmaila u jutarnjoj obradi.</div>';
   } else {
     const groups = { bolid: 'Bolidi', okvir: 'Okviri', repro: 'Repromaterijal' };
@@ -1031,10 +1062,10 @@ function exportCsv(l) {
 /* ── IZBORNIK I RED IZMJENA ── */
 function openMenu() {
   openSheet('MaurOS ' + VERSION,
-    '<button class="opt" id="m1">↻ Osvježi podatke</button><button class="opt" id="m2">⏳ Izmjene na čekanju (' + Q.length + ')</button>'
+    '<button class="opt" id="m1">↻ Osvježi podatke</button><button class="opt" id="m4">📦 Osvježi BOX NOW statuse</button><button class="opt" id="m2">⏳ Izmjene na čekanju (' + Q.length + ')</button>'
     + '<div class="note" style="margin:10px 18px">Prijavljen: ' + esc((S && S.user && S.user.email) || '—') + '<br>Zadnje osvježeno: ' + (lastSync ? new Date(lastSync).toLocaleString('hr-HR') : '—') + '</div>'
     + '<button class="opt" id="m3" style="color:var(--red)">⎋ Odjava</button>',
-    b => { b.querySelector('#m1').onclick = () => { closeTop(); loadAll(); }; b.querySelector('#m2').onclick = () => { closeTop(); setTimeout(openSyncSheet, 280); }; b.querySelector('#m3').onclick = () => { closeTop(); setTimeout(logout, 280); }; });
+    b => { b.querySelector('#m1').onclick = () => { closeTop(); loadAll(); }; b.querySelector('#m4').onclick = () => { closeTop(); setTimeout(syncBoxnow, 280); }; b.querySelector('#m2').onclick = () => { closeTop(); setTimeout(openSyncSheet, 280); }; b.querySelector('#m3').onclick = () => { closeTop(); setTimeout(logout, 280); }; });
 }
 function openSyncSheet() {
   const desc = op => { const o = op.table === 'orders' ? D.orders.find(x => String(x.id) === String(op.id)) : null; return (op.kind === 'insert' ? 'Nova narudžba ' : op.table === 'orders' ? 'Narudžba ' : op.table + ' ') + (o ? oname(o) : '#' + op.id) + ': ' + Object.keys(op.patch || op.row || {}).filter(k => k !== 'id').slice(0, 5).join(', '); };

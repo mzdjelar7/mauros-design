@@ -1,5 +1,5 @@
 // MaurOS PWA v129 – service worker
-// Uvijek prvo mreža (nova verzija odmah), cache samo kad nema interneta. Supabase se NE cacheira.
+// Uvijek prvo mreža bez HTTP cachea (nova verzija odmah), cache samo kad nema interneta. Supabase se NE cacheira.
 const CACHE = 'mauros-pwa-v129';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon-192-v126.png', 'icon-512-v126.png', 'apple-touch-icon-v126.png', 'favicon-v126.png'];
 
@@ -15,7 +15,7 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   e.respondWith(
-    fetch(req).then(res => {
+    fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }).then(res => { // v129: zaobiđi HTTP cache (GitHub ~10 min)
       const copy = res.clone();
       caches.open(CACHE).then(c => c.put(req, copy));
       return res;
