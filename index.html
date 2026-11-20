@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v137 | 2026-11-20 | izvještaj: swipe koji prati prst + animacije, graf po danima (mjesec i dan), dnevni prozor stalne visine, novi hero izgled | v136: izvještaj: ‹ › i swipe po mjesecima/godinama, kalendar dana + dnevni izvještaj (tko je što naručio), vozači/staze sažeto | v135: ploča ostaje na istom mjestu nakon izmjene (stupci ne skaču na vrh) | v134: okvir = 3 dijela: 🖨 HS print · 🏎 Bolid · 🧊 3D staza (oznake na kartici, gumbi u narudžbi) | v133: centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<!-- MAUROS VERSION: PWA v138 | 2026-11-20 | popravak: zaglavlje narudžbe više nije tamno-zeleno (sukob klase .hero → .rhero) | v137: izvještaj: swipe koji prati prst + animacije, graf po danima (mjesec i dan), dnevni prozor stalne visine, novi hero izgled | v136: izvještaj: ‹ › i swipe po mjesecima/godinama, kalendar dana + dnevni izvještaj (tko je što naručio), vozači/staze sažeto | v135: ploča ostaje na istom mjestu nakon izmjene (stupci ne skaču na vrh) | v134: okvir = 3 dijela: 🖨 HS print · 🏎 Bolid · 🧊 3D staza (oznake na kartici, gumbi u narudžbi) | v133: centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -235,15 +235,15 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .mnav{box-shadow:var(--shadow);border-radius:18px;padding:6px 6px}
 .mnav button{border-radius:50%;background:var(--card2);transition:transform .12s}
 .mnav button:active{transform:scale(.9)}
-.hero{border-radius:22px;padding:16px 18px 14px;color:#fff;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.06);
+.rhero{border-radius:22px;padding:16px 18px 14px;color:#fff;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.06);
   background:radial-gradient(130% 120% at 100% 0%,rgba(34,197,94,.35) 0%,rgba(34,197,94,0) 55%),linear-gradient(155deg,#121214 0%,#25252a 100%);box-shadow:0 12px 28px rgba(0,0,0,.16)}
-.hero .hl{font-size:12.5px;opacity:.7;font-weight:600;display:flex;justify-content:space-between;gap:8px}
-.hero .hv{font-size:38px;font-weight:850;letter-spacing:-1.4px;margin:2px 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.hero.sm .hv{font-size:32px;margin-bottom:10px}
-.hero .hg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid rgba(255,255,255,.12);padding-top:11px}
-.hero .hg b{display:block;font-size:18px;font-weight:800;letter-spacing:-.3px}.hero .hg b.gr{color:#4ade80}.hero .hg b.rd{color:#fca5a5}
-.hero .hg span{font-size:11px;opacity:.65;font-weight:600}
-.hero .delta{font-size:12px}.hero .delta.up{background:rgba(74,222,128,.18);color:#4ade80}.hero .delta.dn{background:rgba(248,113,113,.2);color:#fca5a5}
+.rhero .hl{font-size:12.5px;opacity:.7;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.rhero .hv{font-size:38px;font-weight:850;letter-spacing:-1.4px;margin:2px 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rhero.sm .hv{font-size:32px;margin-bottom:10px}
+.rhero .hg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid rgba(255,255,255,.12);padding-top:11px}
+.rhero .hg b{display:block;font-size:18px;font-weight:800;letter-spacing:-.3px}.rhero .hg b.gr{color:#4ade80}.rhero .hg b.rd{color:#fca5a5}
+.rhero .hg span{font-size:11px;opacity:.65;font-weight:600}
+.rhero .delta{font-size:12px}.rhero .delta.up{background:rgba(74,222,128,.18);color:#4ade80}.rhero .delta.dn{background:rgba(248,113,113,.2);color:#fca5a5}
 .kpis.k4 .kpi{min-height:74px}.kpis.k4 .kpi .v{font-size:21px}
 .dchart svg{display:block;width:100%;height:auto;overflow:visible}
 .dchart .bar{transform-box:fill-box;transform-origin:50% 100%;animation:grow .55s cubic-bezier(.2,.8,.2,1) both}
@@ -318,7 +318,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 /* ═════════ OSNOVA ═════════ */
 const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
-const VERSION = 'v137';
+const VERSION = 'v138';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
@@ -1332,7 +1332,7 @@ function drawDay(body) {
   let h = '<div class="dpage"><div class="dhead"><div class="dnum">' + dd + '<small>' + MJS[m - 1] + '</small></div>'
     + '<div class="dtt"><b>' + DANI[a.getDay()] + (isT ? '<span class="tbadge">danas</span>' : isY ? '<span class="tbadge" style="background:var(--card2);color:var(--ink2)">jučer</span>' : '') + '</b><span>' + dd + '. ' + MJG[m - 1] + ' ' + y + '.' + (isT ? '' : ' · <a id="dtoday">danas ›</a>') + '</span></div>'
     + '<div class="dnb"><button id="dprev" aria-label="Prethodni dan">‹</button><button id="dnext" aria-label="Sljedeći dan"' + (isT ? ' disabled' : '') + '>›</button></div></div>'
-    + '<div style="padding:0 16px"><div class="hero sm"><div class="hl"><span>Prihod</span><span>' + (gw.rev ? 'vs prošli ' + ['ned', 'pon', 'uto', 'sri', 'čet', 'pet', 'sub'][wk.getDay()] + ' ' + eur(gw.rev) : '') + '</span></div>'
+    + '<div style="padding:0 16px"><div class="rhero sm"><div class="hl"><span>Prihod</span><span>' + (gw.rev ? 'vs prošli ' + ['ned', 'pon', 'uto', 'sri', 'čet', 'pet', 'sub'][wk.getDay()] + ' ' + eur(gw.rev) : '') + '</span></div>'
     + '<div class="hv">' + eur2(g.rev) + (gw.rev ? delta(g.rev, gw.rev) : '') + '</div><div class="hg">'
     + '<div><b class="' + (g.profit >= 0 ? 'gr' : 'rd') + '">' + (g.est ? '~' : '') + eur2(g.profit) + '</b><span>zarada · trošak ' + eur(g.cost) + '</span></div>'
     + '<div><b>' + g.n + '</b><span>' + (g.n ? 'narudžbi · Ø ' + eur(g.aov) : 'narudžbi') + '</span></div>'
@@ -1398,7 +1398,7 @@ function renderReport() {
   const k = (l2, val, sub, cls) => '<div class="kpi"><div class="l">' + l2 + '</div><div class="v ' + (cls || '') + '">' + val + '</div><div class="s">' + sub + '</div></div>';
   // v137: hero kartica + 4 manje pločice
   const dl = (x, y2) => RS.period !== 'all' && y2 ? delta(x, y2) : '';
-  html += '<div class="sec" style="margin-top:6px"><div class="hero"><div class="hl"><span>Prihod</span><span>' + (RS.period !== 'all' && P.rev ? 'prije ' + eur(P.rev) : '') + '</span></div>'
+  html += '<div class="sec" style="margin-top:6px"><div class="rhero"><div class="hl"><span>Prihod</span><span>' + (RS.period !== 'all' && P.rev ? 'prije ' + eur(P.rev) : '') + '</span></div>'
     + '<div class="hv">' + eur(A.rev) + dl(A.rev, P.rev) + '</div><div class="hg">'
     + '<div><b class="' + (A.profit >= 0 ? 'gr' : 'rd') + '">' + eur(A.profit) + '</b><span>zarada · ' + Math.round(A.margin) + '%</span></div>'
     + '<div><b>' + A.n + '</b><span>narudžbi ' + dl(A.n, P.n) + '</span></div>'
