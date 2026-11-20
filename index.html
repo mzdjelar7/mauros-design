@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v134 | 2026-11-20 | okvir = 3 dijela: 🖨 HS print · 🏎 Bolid · 🧊 3D staza (oznake na kartici, gumbi u narudžbi) | v133: centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<!-- MAUROS VERSION: PWA v135 | 2026-11-20 | ploča ostaje na istom mjestu nakon izmjene (stupci ne skaču na vrh) | v134: okvir = 3 dijela: 🖨 HS print · 🏎 Bolid · 🧊 3D staza (oznake na kartici, gumbi u narudžbi) | v133: centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -266,7 +266,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 /* ═════════ OSNOVA ═════════ */
 const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
-const VERSION = 'v134';
+const VERSION = 'v135';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
@@ -1005,6 +1005,7 @@ function renderBoard() {
     return { s, l, all: l.length };
   });
   const keepScroll = $('#btrack') ? $('#btrack').scrollLeft : null;
+  const keepY = [...document.querySelectorAll('#btrack .bcol')].map(c => c.scrollTop); // v135: vertikalna pozicija svakog stupca
   v.innerHTML = '<div id="bchips" class="hscroll">' + cols.map((c, i) => '<button class="chip' + (i === bIdx ? ' on' : '') + '" data-i="' + i + '"><span style="color:' + STHEX[c.s] + '">●</span> ' + esc(c.s) + '<span class="n">' + c.all + '</span></button>').join('') + '</div>'
     + '<div class="pager">' + cols.map((c, i) => '<i class="' + (i === bIdx ? 'on' : '') + '"></i>').join('') + '</div>'
     + '<div id="btrack">' + cols.map(c => {
@@ -1014,6 +1015,7 @@ function renderBoard() {
     }).join('') + '</div>';
   const tr = $('#btrack');
   if (keepScroll != null) tr.scrollLeft = keepScroll; else tr.scrollLeft = bIdx * tr.clientWidth;
+  tr.querySelectorAll('.bcol').forEach((c, i) => { if (keepY[i]) c.scrollTop = keepY[i]; });
   let t; tr.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => { const i = Math.round(tr.scrollLeft / tr.clientWidth); if (i !== bIdx) { bIdx = i; markBoard(); } }, 60); }, { passive: true });
   $('#bchips').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (!b) return; haptic(); bIdx = +b.dataset.i; tr.scrollTo({ left: bIdx * tr.clientWidth, behavior: 'smooth' }); markBoard(); });
   // dugi pritisak = promjena statusa
