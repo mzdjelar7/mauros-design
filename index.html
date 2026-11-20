@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v136 | 2026-11-20 | izvještaj: ‹ › i swipe po mjesecima/godinama, kalendar dana + dnevni izvještaj (tko je što naručio), vozači/staze sažeto | v135: ploča ostaje na istom mjestu nakon izmjene (stupci ne skaču na vrh) | v134: okvir = 3 dijela: 🖨 HS print · 🏎 Bolid · 🧊 3D staza (oznake na kartici, gumbi u narudžbi) | v133: centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<!-- MAUROS VERSION: PWA v137 | 2026-11-20 | izvještaj: swipe koji prati prst + animacije, graf po danima (mjesec i dan), dnevni prozor stalne visine, novi hero izgled | v136: izvještaj: ‹ › i swipe po mjesecima/godinama, kalendar dana + dnevni izvještaj (tko je što naručio), vozači/staze sažeto | v135: ploča ostaje na istom mjestu nakon izmjene (stupci ne skaču na vrh) | v134: okvir = 3 dijela: 🖨 HS print · 🏎 Bolid · 🧊 3D staza (oznake na kartici, gumbi u narudžbi) | v133: centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -230,6 +230,36 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .dsec{margin:14px 16px 6px;font-size:13px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em}
 .oprof{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);padding:0 18px 8px 70px;margin-top:-6px}
 .seg2{display:flex;gap:6px}
+/* v137: viši nivo izvještaja */
+.rpage,.dpage{touch-action:pan-y;will-change:transform}
+.mnav{box-shadow:var(--shadow);border-radius:18px;padding:6px 6px}
+.mnav button{border-radius:50%;background:var(--card2);transition:transform .12s}
+.mnav button:active{transform:scale(.9)}
+.hero{border-radius:22px;padding:16px 18px 14px;color:#fff;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.06);
+  background:radial-gradient(130% 120% at 100% 0%,rgba(34,197,94,.35) 0%,rgba(34,197,94,0) 55%),linear-gradient(155deg,#121214 0%,#25252a 100%);box-shadow:0 12px 28px rgba(0,0,0,.16)}
+.hero .hl{font-size:12.5px;opacity:.7;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.hero .hv{font-size:38px;font-weight:850;letter-spacing:-1.4px;margin:2px 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hero.sm .hv{font-size:32px;margin-bottom:10px}
+.hero .hg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid rgba(255,255,255,.12);padding-top:11px}
+.hero .hg b{display:block;font-size:18px;font-weight:800;letter-spacing:-.3px}.hero .hg b.gr{color:#4ade80}.hero .hg b.rd{color:#fca5a5}
+.hero .hg span{font-size:11px;opacity:.65;font-weight:600}
+.hero .delta{font-size:12px}.hero .delta.up{background:rgba(74,222,128,.18);color:#4ade80}.hero .delta.dn{background:rgba(248,113,113,.2);color:#fca5a5}
+.kpis.k4 .kpi{min-height:74px}.kpis.k4 .kpi .v{font-size:21px}
+.dchart svg{display:block;width:100%;height:auto;overflow:visible}
+.dchart .bar{transform-box:fill-box;transform-origin:50% 100%;animation:grow .55s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleY(0)}}
+.dchart .hit{cursor:pointer}
+.calsum .mini .v{font-size:16px}
+#sheet.fixh{height:90vh;max-height:90vh}
+#sheet.fixh .sh-b{flex:1;overflow-x:hidden}
+.dhead{display:flex;align-items:center;gap:12px;padding:2px 16px 12px}
+.dnum{width:54px;height:58px;flex:none;border-radius:15px;background:var(--acc);color:var(--accInk);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:850;font-size:25px;line-height:1}
+.dnum small{font-size:10px;font-weight:750;opacity:.7;text-transform:uppercase;margin-top:4px;letter-spacing:.04em}
+.dtt{flex:1;min-width:0}.dtt b{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dtt span{font-size:12.5px;color:var(--mute)}
+.dtt a{color:var(--blue);font-weight:650}
+.dnb{display:flex;gap:6px}.dnb button{width:42px;height:42px;border-radius:50%;background:var(--card2);border:1px solid var(--line);font-size:22px;color:var(--ink);font-family:inherit;transition:transform .12s}
+.dnb button:active{transform:scale(.9)}.dnb button:disabled{opacity:.25}
+.tbadge{display:inline-block;background:var(--greenBg);color:var(--green);font-size:11px;font-weight:750;padding:1px 7px;border-radius:8px;margin-left:4px;vertical-align:1px}
 .mini{background:var(--card2);border-radius:12px;padding:10px;text-align:center}
 .mini .v{font-size:18px;font-weight:800}
 .mini .l{font-size:11px;color:var(--mute);font-weight:600;margin-top:2px}
@@ -288,7 +318,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 /* ═════════ OSNOVA ═════════ */
 const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
-const VERSION = 'v136';
+const VERSION = 'v137';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
@@ -692,6 +722,7 @@ document.addEventListener('click', e => {
 });
 // sheet
 function openSheet(title, html, onReady) {
+  $('#sheet').classList.remove('fixh'); // v137
   $('#shT').textContent = title; $('#shB').innerHTML = html; $('#shB').scrollTop = 0;
   $('#sb').classList.add('on'); $('#sheet').classList.add('on');
   pushLayer(() => { $('#sb').classList.remove('on'); $('#sheet').classList.remove('on'); });
@@ -1156,6 +1187,67 @@ function periodRange(p) {
   if (p.startsWith('y:')) { const yy = +p.slice(2); return [new Date(yy, 0, 1), new Date(yy + 1, 0, 1), 'Godina ' + yy]; }
   return [new Date(2000, 0, 1), new Date(2100, 0, 1), 'Sve vrijeme'];
 }
+// v137: stranica koja klizi za prstom (izvještaj po mjesecima, dnevni izvještaj po danima)
+function pager(host, pageSel, can, change) {
+  host._pc = { pageSel, can, change };
+  if (host._pager) return host._pager;
+  let sx = 0, sy = 0, t0 = 0, dx = 0, lock = null, on = false, busy = false;
+  const W = () => host.clientWidth || innerWidth, pc = () => host._pc, pg = () => host.querySelector(pc().pageSel);
+  const spring = p => { p.style.transition = 'transform .34s cubic-bezier(.2,.8,.2,1), opacity .25s'; p.style.transform = ''; p.style.opacity = ''; };
+  function go(dir) {
+    const p = pg(); if (busy || !p) return;
+    if (!pc().can(dir)) { haptic(); p.style.transition = 'transform .12s'; p.style.transform = 'translateX(' + (dir > 0 ? -16 : 16) + 'px)'; setTimeout(() => spring(p), 120); return; }
+    busy = true; haptic();
+    p.style.transition = 'transform .18s cubic-bezier(.4,0,.7,.4), opacity .18s'; p.style.transform = 'translateX(' + (dir > 0 ? -1 : 1) * W() * .55 + 'px)'; p.style.opacity = '0';
+    setTimeout(() => {
+      const np = pc().change(dir);
+      if (np) { np.style.transition = 'none'; np.style.transform = 'translateX(' + (dir > 0 ? 1 : -1) * W() * .32 + 'px)'; np.style.opacity = '0'; void np.offsetWidth; spring(np); }
+      busy = false;
+    }, 175);
+  }
+  host.addEventListener('touchstart', e => { if (busy) { on = false; return; } const t = e.touches[0]; sx = t.clientX; sy = t.clientY; t0 = Date.now(); dx = 0; lock = null; on = !!pg() && !e.target.closest('.hscroll,input,select,textarea'); }, { passive: true });
+  host.addEventListener('touchmove', e => {
+    if (!on) return; const t = e.touches[0], x = t.clientX - sx, y = t.clientY - sy;
+    if (lock === null && (Math.abs(x) > 8 || Math.abs(y) > 8)) lock = Math.abs(x) > Math.abs(y) * 1.15 ? 'x' : 'y';
+    if (lock !== 'x') return; dx = x; const p = pg(); if (!p) return;
+    const ok = pc().can(x < 0 ? 1 : -1), tx = ok ? x : x * .3 / (1 + Math.abs(x) / 250);
+    p.style.transition = 'none'; p.style.transform = 'translateX(' + tx + 'px)'; p.style.opacity = ok ? String(1 - Math.min(.45, Math.abs(x) / W() * .7)) : '1';
+  }, { passive: true });
+  const end = () => {
+    if (!on || lock !== 'x') { on = false; return; } on = false; host._noclick = Date.now();
+    const p = pg(), v = Math.abs(dx) / Math.max(1, Date.now() - t0), dir = dx < 0 ? 1 : -1;
+    if (pc().can(dir) && (Math.abs(dx) > W() * .2 || (v > .45 && Math.abs(dx) > 30))) go(dir); else if (p) spring(p);
+  };
+  host.addEventListener('touchend', end); host.addEventListener('touchcancel', end);
+  host.addEventListener('click', e => { if (Date.now() - (host._noclick || 0) < 350) { e.stopPropagation(); e.preventDefault(); } }, true);
+  return (host._pager = { go });
+}
+// v137: stupčasti graf po danima – prihod (stupac), zarada (zeleno), prosjek (crtkano); dodir = taj dan
+function daysSvg(days, o) {
+  o = o || {}; const W = 340, H = o.h || 150, top = 20, bot = 18, n = days.length, bw = (W - 8) / n;
+  const has = days.filter(x => x.g), vals = has.map(x => x.g.rev), max = Math.max(1, ...vals), avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  const y = v => H - bot - (v / max) * (H - top - bot), anySel = days.some(x => x.sel);
+  const best = has.reduce((m, x) => (!m || x.g.rev > m.g.rev ? x : m), null);
+  let s = '<svg viewBox="0 0 ' + W + ' ' + H + '"><line x1="4" x2="' + (W - 4) + '" y1="' + (H - bot + .5) + '" y2="' + (H - bot + .5) + '" stroke="currentColor" style="color:var(--line)"/>';
+  days.forEach((x, i) => {
+    const cx = 4 + i * bw, w = Math.max(2.5, bw * .64), bx = cx + (bw - w) / 2, dd = x.d.getDate(), r = Math.min(4, w / 2);
+    if (x.sel) s += '<rect x="' + (cx + .5) + '" y="2" width="' + (bw - 1) + '" height="' + (H - 4) + '" rx="7" fill="currentColor" opacity=".08" style="color:var(--ink)"/>';
+    if (x.g && x.g.rev > 0) {
+      const hh = Math.max(2, H - bot - y(x.g.rev)), op = anySel && !x.sel ? .3 : .88;
+      s += '<rect class="bar" style="animation-delay:' + (i * 12) + 'ms;color:var(--ink)" x="' + bx + '" y="' + (H - bot - hh) + '" width="' + w + '" height="' + hh + '" rx="' + r + '" fill="currentColor" opacity="' + op + '"/>';
+      if (x.g.profit > 0) { const ph = Math.max(1.5, H - bot - y(Math.min(x.g.profit, x.g.rev))); s += '<rect class="bar" style="animation-delay:' + (i * 12 + 60) + 'ms" x="' + (bx + w * .22) + '" y="' + (H - bot - ph) + '" width="' + (w * .56) + '" height="' + ph + '" rx="' + Math.min(2, w / 4) + '" fill="#22c55e" opacity="' + (anySel && !x.sel ? .45 : 1) + '"/>'; }
+    } else if (x.g) s += '<circle cx="' + (cx + bw / 2) + '" cy="' + (H - bot - 2) + '" r="1.4" fill="currentColor" style="color:var(--mute)" opacity=".6"/>';
+    const lab = o.labelAll || dd === 1 || dd % 5 === 0 || x.sel || x.today;
+    if (lab) s += '<text x="' + (cx + bw / 2) + '" y="' + (H - 4) + '" text-anchor="middle" font-size="' + (o.labelAll ? 9.5 : 9) + '" font-weight="' + (x.sel || x.today ? 800 : 500) + '" fill="currentColor" style="color:' + (x.sel || x.today ? 'var(--ink)' : 'var(--mute)') + '">' + dd + '</text>';
+    const showV = x.g && x.g.rev > 0 && (x.sel || (!anySel && x === best));
+    if (showV) s += '<text x="' + (cx + bw / 2) + '" y="' + (y(x.g.rev) - 5) + '" text-anchor="middle" font-size="9.5" font-weight="800" fill="currentColor" style="color:var(--ink)">' + kfmt(x.g.rev) + '</text>';
+    if (x.g && !x.fut) s += '<rect class="hit" data-dayk="' + dKey(x.d) + '" x="' + cx + '" y="0" width="' + bw + '" height="' + H + '" fill="transparent"/>';
+  });
+  if (avg > 0) s += '<line x1="4" x2="' + (W - 4) + '" y1="' + y(avg) + '" y2="' + y(avg) + '" stroke="currentColor" stroke-dasharray="3 4" opacity=".55" style="color:var(--ink2)"/><text x="' + (W - 4) + '" y="' + (y(avg) - 4) + '" text-anchor="end" font-size="8.5" font-weight="700" fill="currentColor" style="color:var(--ink2)">Ø ' + kfmt(avg) + '</text>';
+  return s + '</svg>';
+}
+const shiftKey = (k, n) => { const [y, m, dd] = k.split('-').map(Number); return dKey(new Date(y, m - 1, dd + n)); };
+const keyDate = k => { const [y, m, dd] = k.split('-').map(Number); return new Date(y, m - 1, dd); };
 // v136: listanje ‹ › / swipe po mjesecima (ili godinama)
 const dKey = d => ymKey(d) + '-' + String(d.getDate()).padStart(2, '0');
 const DANI = ['Nedjelja', 'Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota'];
@@ -1173,10 +1265,7 @@ function periodShift(dir) {
   if (isYearP(p)) { const y = a.getFullYear() + dir; if (y > n.getFullYear() || y < f.getFullYear()) return null; return y === n.getFullYear() ? 'ytd' : 'y:' + y; }
   return null;
 }
-function goPeriod(dir) {
-  const np = periodShift(dir); if (!np) { haptic(); return; }
-  haptic(); RS.period = np; RS.win = null; RS.prev = null; RS._anim = dir > 0 ? 'slL' : 'slR'; renderReport();
-}
+function goPeriod(dir) { const v = $('#v-report'); if (v._pager) v._pager.go(dir); } // v137
 function navBar(a, b, label) {
   const p = RS.period, n = new Date();
   let t = label, sub = '';
@@ -1199,59 +1288,72 @@ function dayOrders(a, flt) { const b = new Date(a); b.setDate(b.getDate() + 1); 
 const kfmt = v => v >= 1000 ? (v / 1000).toFixed(1).replace('.', ',') + 'k' : String(Math.round(v));
 function calSection(a, b) {
   const t0 = today0(), dim = new Date(a.getFullYear(), a.getMonth() + 1, 0).getDate(), days = [];
-  for (let i = 1; i <= dim; i++) { const d = new Date(a.getFullYear(), a.getMonth(), i); days.push({ d, g: d > t0 ? null : dayAgg(dayOrders(d, true)) }); }
-  const past = days.filter(x => x.g), max = Math.max(1, ...past.map(x => x.g.rev));
-  let h = '<div class="cal">' + ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'].map(x => '<div class="h">' + x + '</div>').join('');
-  for (let i = 0; i < (a.getDay() + 6) % 7; i++) h += '<div class="d e"></div>';
-  days.forEach(x => {
-    const g = x.g, al = g && g.rev ? .14 + .78 * g.rev / max : 0;
-    h += '<button class="d' + (!g ? ' fut' : '') + (al > .5 ? ' hot' : '') + (+x.d === +t0 ? ' today' : '') + '" data-day="' + dKey(x.d) + '"' + (al ? ' style="background:rgba(21,128,61,' + al.toFixed(2) + ')"' : '') + '><span class="n">' + x.d.getDate() + '</span><span class="r">' + (g && g.n ? kfmt(g.rev) : '') + '</span></button>';
-  });
-  h += '</div>';
+  for (let i = 1; i <= dim; i++) { const d = new Date(a.getFullYear(), a.getMonth(), i); const fut = d > t0; days.push({ d, fut, today: +d === +t0, g: fut ? null : dayAgg(dayOrders(d, true)) }); }
+  const past = days.filter(x => x.g), dv = RS.dview || 'graf';
+  let h;
+  if (dv === 'graf') {
+    h = '<div class="dchart">' + daysSvg(days) + '</div><div class="legend"><span><i style="background:var(--ink)"></i>prihod</span><span><i style="background:#22c55e"></i>zarada</span><span><i style="background:transparent;border-top:2px dashed var(--ink2);border-radius:0;height:0"></i>prosjek</span><span style="margin-left:auto">👆 dodirni dan</span></div>';
+  } else {
+    const max = Math.max(1, ...past.map(x => x.g.rev));
+    h = '<div class="cal">' + ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'].map(x => '<div class="h">' + x + '</div>').join('');
+    for (let i = 0; i < (a.getDay() + 6) % 7; i++) h += '<div class="d e"></div>';
+    days.forEach(x => {
+      const g = x.g, al = g && g.rev ? .14 + .78 * g.rev / max : 0;
+      h += '<button class="d' + (x.fut ? ' fut' : '') + (al > .5 ? ' hot' : '') + (x.today ? ' today' : '') + '" data-dayk="' + dKey(x.d) + '"' + (al ? ' style="background:rgba(21,128,61,' + al.toFixed(2) + ')"' : '') + '><span class="n">' + x.d.getDate() + '</span><span class="r">' + (g && g.n ? kfmt(g.rev) : '') + '</span></button>';
+    });
+    h += '</div>';
+  }
   const best = past.reduce((m, x) => (!m || x.g.rev > m.g.rev ? x : m), null), sumRev = past.reduce((s, x) => s + x.g.rev, 0);
   const active = past.filter(x => x.g.n).length, isCur = ymKey(a) === ymKey(t0);
   const mini = (v, l) => '<div class="mini"><div class="v">' + v + '</div><div class="l">' + l + '</div></div>';
-  h += '<div class="calsum">' + mini(best && best.g.rev ? best.d.getDate() + '.' : '—', best && best.g.rev ? 'najbolji dan · ' + eur(best.g.rev) : 'najbolji dan')
+  h += '<div class="calsum">' + mini(best && best.g.rev ? best.d.getDate() + '. · ' + eur(best.g.rev) : '—', 'najbolji dan')
     + mini(past.length ? eur(sumRev / past.length) : '—', 'prosjek po danu')
-    + (isCur ? mini(past.length ? eur(sumRev / past.length * dim) : '—', 'procjena za mjesec') : mini(active + '/' + dim, 'dana s narudžbom')) + '</div>';
-  return '<div class="sec"><div class="sec-h"><h2>Po danima</h2><span class="note" style="margin:0">dodirni dan</span></div><div class="card pad">' + h + '</div></div>';
+    + (isCur ? mini(past.length ? '~' + eur(sumRev / past.length * dim) : '—', 'procjena mjeseca') : mini(active + '/' + dim, 'dana s narudžbom')) + '</div>';
+  const ch = (k2, l2) => '<button class="chip' + (dv === k2 ? ' on' : '') + '" data-dv="' + k2 + '">' + l2 + '</button>';
+  return '<div class="sec"><div class="sec-h"><h2>Po danima</h2><div class="seg2">' + ch('graf', '📊 Graf') + ch('kal', '📅 Kalendar') + '</div></div><div class="card pad">' + h + '</div></div>';
 }
-// v136: dnevni izvještaj (sheet; ‹ › i swipe = drugi dan)
+// v137: dnevni izvještaj – prozor stalne visine, ‹ › i swipe koji klizi, graf 14 dana
 function dayDetail(dk, flt) {
-  openSheet('', '', b => { drawDay(b, dk, flt);
-    let sx = 0, sy = 0, on = false;
-    b.addEventListener('touchstart', e => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; on = !e.target.closest('.hscroll'); }, { passive: true });
-    b.addEventListener('touchend', e => { if (!on) return; const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy; if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) { const n = b.querySelector(dx < 0 ? '#dnext' : '#dprev'); if (n && !n.disabled) n.click(); } }, { passive: true });
+  openSheet('Dnevni izvještaj', '', b => {
+    $('#sheet').classList.add('fixh');
+    b._dk = dk; b._flt = flt; b._jump = null;
+    drawDay(b);
+    pager(b, '.dpage', dir => dir < 0 || keyDate(shiftKey(b._dk, 1)) <= today0(), dir => { b._dk = b._jump || shiftKey(b._dk, dir); b._jump = null; return drawDay(b); });
   });
 }
-function drawDay(body, dk, flt, anim) {
-  const [y, m, dd] = dk.split('-').map(Number), a = new Date(y, m - 1, dd), t0 = today0();
+function drawDay(body) {
+  const dk = body._dk, flt = body._flt, a = keyDate(dk), t0 = today0(), [y, m, dd] = dk.split('-').map(Number);
   const l = dayOrders(a, flt).sort((x, z) => new Date(x.inserted_at || 0) - new Date(z.inserted_at || 0)), g = dayAgg(l);
-  const pv = new Date(a); pv.setDate(pv.getDate() - 1); const nx = new Date(a); nx.setDate(nx.getDate() + 1);
   const wk = new Date(a); wk.setDate(wk.getDate() - 7); const gw = dayAgg(dayOrders(wk, flt));
-  const rel = +a === +t0 ? 'Danas · ' : +a === +t0 - 864e5 ? 'Jučer · ' : '';
-  $('#shT').textContent = rel + DANI[a.getDay()] + ', ' + dd + '. ' + MJG[m - 1] + ' ' + y + '.';
-  const k = (l2, val, sub, cls) => '<div class="kpi"><div class="l">' + l2 + '</div><div class="v ' + (cls || '') + '">' + val + '</div><div class="s">' + sub + '</div></div>';
-  let h = '<div class="' + (anim || '') + '"><div class="dnav"><button id="dprev">‹ ' + pv.getDate() + '. ' + MJS[pv.getMonth()] + '</button>' + (+a !== +t0 ? '<button id="dtoday">Danas</button>' : '') + '<button id="dnext"' + (nx > t0 ? ' disabled' : '') + '>' + nx.getDate() + '. ' + MJS[nx.getMonth()] + ' ›</button></div>'
-    + '<div class="dkp"><div class="kpis">'
-    + k('Prihod', eur2(g.rev), (gw.rev ? delta(g.rev, gw.rev) + ' vs prošli ' + ['ned', 'pon', 'uto', 'sri', 'čet', 'pet', 'sub'][wk.getDay()] : ''))
-    + k('Zarada', (g.est ? '~' : '') + eur2(g.profit), 'trošak ' + eur2(g.cost), g.profit >= 0 ? 'green' : 'red')
-    + k('Narudžbe', g.n, g.n ? 'prosjek ' + eur2(g.aov) : 'nema narudžbi')
-    + k('Plaćeno', eur2(g.paid), g.unpaid ? 'neplaćeno ' + eur2(g.unpaid) : (g.n ? 'sve plaćeno' : '—'), g.unpaid ? 'red' : '')
-    + '</div>' + (g.est ? '<div class="note">' + g.est + ' od ' + g.n + ' narudžbi nema upisan trošak – za njih je uzet prosjek tog proizvoda.</div>' : '')
-    + (flt && ['okvir', 'platform', 'vozac', 'staza', 'paid'].some(x => RS[x]) ? '<div class="note">⚙ Primijenjeni su filteri izvještaja.</div>' : '') + '</div>';
+  const isT = +a === +t0, isY = +a === +t0 - 864e5;
+  // prozor grafa: 14 dana oko odabranog (ne u budućnost)
+  let end = new Date(a); end.setDate(end.getDate() + 3); if (end > t0) end = new Date(t0);
+  const win = []; for (let i = 13; i >= 0; i--) { const d = new Date(end); d.setDate(d.getDate() - i); win.push({ d, sel: +d === +a, today: +d === +t0, g: dayAgg(dayOrders(d, flt)) }); }
+  let h = '<div class="dpage"><div class="dhead"><div class="dnum">' + dd + '<small>' + MJS[m - 1] + '</small></div>'
+    + '<div class="dtt"><b>' + DANI[a.getDay()] + (isT ? '<span class="tbadge">danas</span>' : isY ? '<span class="tbadge" style="background:var(--card2);color:var(--ink2)">jučer</span>' : '') + '</b><span>' + dd + '. ' + MJG[m - 1] + ' ' + y + '.' + (isT ? '' : ' · <a id="dtoday">danas ›</a>') + '</span></div>'
+    + '<div class="dnb"><button id="dprev" aria-label="Prethodni dan">‹</button><button id="dnext" aria-label="Sljedeći dan"' + (isT ? ' disabled' : '') + '>›</button></div></div>'
+    + '<div style="padding:0 16px"><div class="hero sm"><div class="hl"><span>Prihod</span><span>' + (gw.rev ? 'vs prošli ' + ['ned', 'pon', 'uto', 'sri', 'čet', 'pet', 'sub'][wk.getDay()] + ' ' + eur(gw.rev) : '') + '</span></div>'
+    + '<div class="hv">' + eur2(g.rev) + (gw.rev ? delta(g.rev, gw.rev) : '') + '</div><div class="hg">'
+    + '<div><b class="' + (g.profit >= 0 ? 'gr' : 'rd') + '">' + (g.est ? '~' : '') + eur2(g.profit) + '</b><span>zarada · trošak ' + eur(g.cost) + '</span></div>'
+    + '<div><b>' + g.n + '</b><span>' + (g.n ? 'narudžbi · Ø ' + eur(g.aov) : 'narudžbi') + '</span></div>'
+    + '<div><b' + (g.unpaid ? ' class="rd"' : '') + '>' + eur2(g.paid) + '</b><span>' + (g.unpaid ? 'plaćeno · fali ' + eur(g.unpaid) : 'plaćeno') + '</span></div>'
+    + '</div></div>'
+    + (g.est ? '<div class="note">~ ' + g.est + ' od ' + g.n + ' narudžbi nema upisan trošak – uzet je prosjek tog proizvoda.</div>' : '')
+    + (flt && ['okvir', 'platform', 'vozac', 'staza', 'paid'].some(x => RS[x]) ? '<div class="note">⚙ Primijenjeni su filteri izvještaja.</div>' : '') + '</div>'
+    + '<div class="card pad dchart" style="margin:12px 16px 0">' + daysSvg(win, { h: 112, labelAll: true }) + '</div>';
   if (g.n) {
-    const gp = groupBy(l, o => prod(o)), pl = groupBy(l, 'platform');
+    const gp = groupBy(l, o => prod(o)), pl = groupBy(l, 'platform'), avg = avgCostByProd();
     h += '<div class="dsec">Što je naručeno</div><div class="card pad" style="margin:0 16px">' + bars(gp.map(([n, x]) => [n, x.n, x.rev]), r => r[1] + ' · ' + eur(r[2]))
       + (pl.length > 1 ? '<div style="margin-top:12px">' + bars(pl.map(([n, x]) => [n, x.n, x.rev, 'var(--ink2)']), r => r[1] + ' · ' + eur(r[2])) + '</div>' : '') + '</div>';
-    const avg = avgCostByProd();
     h += '<div class="dsec">Tko je naručio (' + g.n + ')</div>' + l.map(o => { const c = costOf(o) > 0 ? costOf(o) : (avg[o.okvir] || 0); return orderRow(o) + '<div class="oprof"><span>' + esc(o.platform || '') + '</span><span>zarada ' + (costOf(o) > 0 ? '' : '~') + eur2(num(o.cijena) - c) + '</span></div>'; }).join('');
   } else h += '<div class="empty">Nema narudžbi ovaj dan</div>';
   body.innerHTML = h + '</div>'; body.scrollTop = 0;
-  const go2 = (d, an) => { haptic(); drawDay(body, dKey(d), flt, an); };
-  body.querySelector('#dprev').addEventListener('click', () => go2(pv, 'slR'));
-  const nb = body.querySelector('#dnext'); if (nb && !nb.disabled) nb.addEventListener('click', () => go2(nx, 'slL'));
-  const tb = body.querySelector('#dtoday'); if (tb) tb.addEventListener('click', () => go2(t0, 'slL'));
+  const P = () => body._pager;
+  body.querySelector('#dprev').addEventListener('click', () => P() && P().go(-1));
+  body.querySelector('#dnext').addEventListener('click', () => P() && P().go(1));
+  const tb = body.querySelector('#dtoday'); if (tb) tb.addEventListener('click', () => { body._jump = dKey(t0); P() && P().go(1); });
+  body.querySelectorAll('[data-dayk]').forEach(r => r.addEventListener('click', () => { const k = r.dataset.dayk; if (k === body._dk) return; body._jump = k; P() && P().go(k > body._dk ? 1 : -1); }));
+  return body.querySelector('.dpage');
 }
 function prevRange(a, b) { const months = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth(); return [new Date(a.getFullYear(), a.getMonth() - months, 1), a]; }
 function repFilter(o) {
@@ -1294,11 +1396,16 @@ function renderReport() {
     + '<button class="chip" id="rcsv">⬇ CSV</button></div>';
   // KPI
   const k = (l2, val, sub, cls) => '<div class="kpi"><div class="l">' + l2 + '</div><div class="v ' + (cls || '') + '">' + val + '</div><div class="s">' + sub + '</div></div>';
-  html += '<div class="sec" style="margin-top:4px"><div class="kpis">'
-    + k('Prihod', eur(A.rev), (RS.period !== 'all' ? delta(A.rev, P.rev) + ' vs prije' : 'ukupno'))
-    + k('Narudžbe', A.n, (RS.period !== 'all' ? delta(A.n, P.n) + ' vs prije' : 'ukupno'))
-    + k('Zarada', eur(A.profit), 'marža ' + Math.round(A.margin) + '%', A.profit >= 0 ? 'green' : 'red')
-    + k('Prosj. narudžba', eur(A.aov, 2), 'trošak ' + eur(A.cost))
+  // v137: hero kartica + 4 manje pločice
+  const dl = (x, y2) => RS.period !== 'all' && y2 ? delta(x, y2) : '';
+  html += '<div class="sec" style="margin-top:6px"><div class="hero"><div class="hl"><span>Prihod</span><span>' + (RS.period !== 'all' && P.rev ? 'prije ' + eur(P.rev) : '') + '</span></div>'
+    + '<div class="hv">' + eur(A.rev) + dl(A.rev, P.rev) + '</div><div class="hg">'
+    + '<div><b class="' + (A.profit >= 0 ? 'gr' : 'rd') + '">' + eur(A.profit) + '</b><span>zarada · ' + Math.round(A.margin) + '%</span></div>'
+    + '<div><b>' + A.n + '</b><span>narudžbi ' + dl(A.n, P.n) + '</span></div>'
+    + '<div><b>' + eur(A.aov) + '</b><span>prosjek</span></div></div></div>'
+    + '<div class="kpis k4" style="margin-top:10px">'
+    + k('Trošak', eur(A.cost), A.rev ? Math.round(A.cost / A.rev * 100) + '% prihoda' : '—')
+    + k('Neplaćeno', eur(A.unpaid), A.unpaid ? 'čeka uplatu' : 'sve plaćeno', A.unpaid ? 'red' : '')
     + k('Meta oglasi', eur(ads), A.n ? eur(ads / A.n, 2) + ' po narudžbi' : '—')
     + k('Zarada − oglasi', eur(A.profit - ads), 'čista zarada', A.profit - ads >= 0 ? 'green' : 'red')
     + '</div>' + (A.noCost ? '<div class="note">' + A.noCost + ' narudžbi nema upisan trošak – nisu u zaradi/marži.</div>' : '') + '</div>';
@@ -1319,7 +1426,7 @@ function renderReport() {
     + (selM ? '<div class="msel"><b>' + esc(MJ[selM.d.getMonth()] + ' ' + selM.d.getFullYear()) + '</b><span>' + eur(selM.rev) + ' prihod · ' + eur(selM.profit) + ' zarada · ' + selM.n + ' narudžbi' + (selM.ads ? ' · oglasi ' + eur(selM.ads) : '') + '</span></div>' : '')
     + trendSvg(tm) + '<div class="legend"><span><i style="background:var(--ink)"></i>prihod</span><span><i style="background:var(--green)"></i>zarada</span><span><i style="background:var(--red)"></i>oglasi</span><span style="margin-left:auto">👆 dodirni mjesec</span></div></div></div>';
   RS._win = { n: nM, end: endM };
-  if (!A.n) { v.innerHTML = '<div class="' + anim + '">' + html + '<div class="empty">Nema narudžbi u ovom razdoblju</div></div>'; bindReport(v, l); return; }
+  if (!A.n) { v.innerHTML = '<div class="rpage">' + html + '<div class="empty">Nema narudžbi u ovom razdoblju</div></div>'; bindReport(v, l); return; }
   // proizvodi
   const gp = groupBy(l, o => prod(o));
   const okvOf = lab => Object.keys(OKV).find(k => OKV[k] === lab) || lab;
@@ -1367,7 +1474,7 @@ function renderReport() {
   if (cs.length || ads) html += '<div class="sec"><div class="sec-h"><h2>Struktura troškova</h2></div><div class="card pad">' + bars(ads ? cs.concat([['Meta oglasi', ads, 0, 'var(--red)']]).sort((x, y) => y[1] - x[1]) : cs, r => eur(r[1])) + '</div></div>';
   // najveće narudžbe
   html += '<div class="sec"><div class="sec-h"><h2>Najveće narudžbe</h2></div><div class="card">' + [...l].sort((x, y) => num(y.cijena) - num(x.cijena)).slice(0, 5).map(orderRow).join('') + '</div></div>';
-  v.innerHTML = '<div class="' + anim + '">' + html + '</div>'; bindReport(v, l);
+  v.innerHTML = '<div class="rpage">' + html + '</div>'; bindReport(v, l);
 }
 function trendSvg(tm) {
   const W = 340, H = 150, pad = 18, n = tm.length, bw = (W - pad) / n, max = Math.max(1, ...tm.map(t => Math.max(t.rev, t.ads)));
@@ -1397,14 +1504,11 @@ function bindReport(v, l) {
   // v136
   const mp = v.querySelector('#mprev'), mn = v.querySelector('#mnext');
   if (mp) mp.addEventListener('click', () => goPeriod(-1)); if (mn) mn.addEventListener('click', () => goPeriod(1));
-  v.querySelectorAll('.cal [data-day]').forEach(c => c.addEventListener('click', () => { haptic(); dayDetail(c.dataset.day, true); }));
+  v.querySelectorAll('[data-dayk]').forEach(c => c.addEventListener('click', () => { haptic(); dayDetail(c.dataset.dayk, true); }));
+  v.querySelectorAll('[data-dv]').forEach(c => c.addEventListener('click', () => { haptic(); keep(() => { RS.dview = c.dataset.dv; }); }));
   v.querySelectorAll('[data-top]').forEach(c => c.addEventListener('click', () => { haptic(); keep(() => { RS.top = c.dataset.top; }); }));
   const tm2 = v.querySelector('#topmore'); if (tm2) tm2.addEventListener('click', () => { haptic(); keep(() => { RS.topAll = !RS.topAll; }); });
-  if (!v._swipe) {
-    v._swipe = true; let sx = 0, sy = 0, on = false;
-    v.addEventListener('touchstart', e => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; on = !e.target.closest('.hscroll,input,select,textarea'); }, { passive: true });
-    v.addEventListener('touchend', e => { if (!on) return; on = false; const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy; if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) goPeriod(dx < 0 ? 1 : -1); }, { passive: true });
-  }
+  pager(v, '.rpage', d => !!periodShift(d), d => { RS.period = periodShift(d); RS.win = null; RS.prev = null; renderReport(); return v.querySelector('.rpage'); }); // v137
   const bk = v.querySelector('#rback'); if (bk) bk.addEventListener('click', () => { haptic(); keep(() => { RS.period = RS.prev; RS.prev = null; RS.win = null; }); });
   // v127: dodir na traku = filter (ponovni dodir ga skida)
   v.querySelectorAll('[data-fk]').forEach(b => b.addEventListener('click', () => { haptic(); const k = b.dataset.fk, val = b.dataset.fv; keep(() => { RS[k] = RS[k] === val ? '' : val; }); toast(RS[k] ? 'Filter: ' + (k === 'okvir' ? (OKV[val] || val) : short(val)) : 'Filter maknut'); }));
