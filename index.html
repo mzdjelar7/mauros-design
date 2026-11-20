@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v133 | 2026-11-19 | centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<!-- MAUROS VERSION: PWA v134 | 2026-11-20 | okvir = 3 dijela: 🖨 HS print · 🏎 Bolid · 🧊 3D staza (oznake na kartici, gumbi u narudžbi) | v133: centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -162,6 +162,13 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .btn{width:100%;padding:15px;border-radius:15px;background:var(--acc);color:var(--accInk);font-weight:700;font-size:16px}
 .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
 .btn:disabled{opacity:.5}
+/* v134: dijelovi okvira */
+.parts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 16px 0}
+.part{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:650;color:var(--mute)}
+.part .i{font-size:20px;filter:grayscale(1);opacity:.55}
+.part.on{background:var(--greenBg);border-color:var(--green);color:var(--green)}
+.part.on .i{filter:none;opacity:1}
+.p-off{background:var(--card2);color:var(--mute)}
 /* v130: Radim sad */
 .bcard.radim{background:var(--rdBg);border:2px solid var(--rdLine)}
 .row.radim{background:var(--rdBg);box-shadow:inset 4px 0 0 var(--rdLine)}
@@ -259,7 +266,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 /* ═════════ OSNOVA ═════════ */
 const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
-const VERSION = 'v133';
+const VERSION = 'v134';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
@@ -611,6 +618,10 @@ async function syncBoxnow() {
   finally { bnSyncing = false; renderAll(); }
 }
 const paidPill = o => o.paid === 'Da' ? '' : pill('Neplaćeno', 'red');
+// v134: okvir = HS print + bolid + 3D staza
+const PARTS = [['hs_print', '🖨', 'HS print'], ['bolid_stanje', '🏎', 'Bolid'], ['print3d', '🧊', '3D staza']];
+const partsPills = o => isFrame(o) ? PARTS.map(([f, i, l]) => pill(i + ' ' + (f === 'hs_print' ? 'HS' : f === 'print3d' ? '3D' : 'Bolid') + (o[f] === 'Da' ? ' ✓' : ''), o[f] === 'Da' ? 'green' : 'off')).join('') : '';
+const partsDone = o => PARTS.every(([f]) => o[f] === 'Da');
 // v130: narudžbe na kojima sad radiš (orders.radim = 'Da')
 const isRadim = o => o.radim === 'Da' && !done(o);
 const rdPill = '<span class="pill p-rd">🔨 Radim</span>';
@@ -870,13 +881,14 @@ function drawOrder(el) {
   el.querySelector('.t').textContent = oname(o);
   el.querySelector('.sbody').innerHTML =
     '<div class="hero"><h2>' + esc(oname(o)) + '</h2><div class="p">' + esc(prod(o)) + (o.vozac ? ' · ' + esc(o.vozac) : '') + (o.staza ? ' · ' + esc(short(o.staza)) : '') + (o.godina ? ' ' + esc(o.godina) : '') + '</div>'
-    + '<div class="pills">' + stPill(o) + rokPill(o) + bnPill(o) + (o.paid === 'Da' ? pill('Plaćeno', 'green') : pill('Neplaćeno', 'red')) + (isFrame(o) && o.hs_print === 'Da' ? pill('🖨 HS', 'green') : '') + '</div></div>'
+    + '<div class="pills">' + stPill(o) + rokPill(o) + bnPill(o) + (o.paid === 'Da' ? pill('Plaćeno', 'green') : pill('Neplaćeno', 'red')) + partsPills(o) + '</div></div>'
     + '<div class="actions">'
     + '<button class="act" data-a="status"><span class="i">🔄</span>Status</button>'
     + '<button class="act" data-a="paid"><span class="i">' + (o.paid === 'Da' ? '💶' : '💸') + '</span>' + (o.paid === 'Da' ? 'Plaćeno' : 'Označi plaćeno') + '</button>'
     + (() => { const s = social(o); return '<a class="act" ' + linkAttrs(s.chat || s.inbox) + (s.chat ? '' : ' data-search="' + esc(s.search) + '"') + '><span class="i">💬</span>' + esc(s.label) + '</a>'; })()
     + '<button class="act" data-a="copy"><span class="i">📋</span>' + (o.tracking ? 'Tracking' : 'Kopiraj') + '</button>'
     + '</div>'
+    + (isFrame(o) && !done(o) ? '<div class="parts">' + PARTS.map(([f, i, l]) => '<button class="part' + (o[f] === 'Da' ? ' on' : '') + '" data-part="' + f + '"><span class="i">' + i + '</span>' + l + '<span style="font-size:10.5px;font-weight:600">' + (o[f] === 'Da' ? '✓ gotovo' : 'nije još') + '</span></button>').join('') + '</div>' : '')
     + (done(o) ? '' : '<button class="btn ghost rdbtn' + (o.radim === 'Da' ? ' on' : '') + '" data-a="radim">' + (o.radim === 'Da' ? '🔨 Radim sad – dodirni za kraj' : '🔨 Označi: radim sad') + '</button>')
     + card('Proizvod', kv('Proizvod', prod(o)) + kv('Vozač', o.vozac) + kv('Staza', o.staza) + kv('Godina', o.godina) + kv('Tekst', o.tekst) + kv('Posveta', o.posveta === 'Da' ? (o.posveta_tekst || 'Da') : '') + kv('Kuglice', o.kuglice) + kv('Privjesci', o.privjesci) + kv('Stanje bolida', o.bolid_stanje))
     + card('Kupac', kv('Ime', o.fullname) + kv('Profil', o.name, false, social(o).profile ? ' <a class="copy" ' + linkAttrs(social(o).profile) + '>otvori ›</a>' : '') + kv('Platforma', o.platform) + kv('Mobitel', o.tel, false, tel ? ' <a class="copy" href="tel:' + esc(tel) + '">nazovi</a>' : '') + kv('E-mail', o.email))
@@ -888,6 +900,7 @@ function drawOrder(el) {
   el.querySelector('.sbody').onclick = e => {
     const c = e.target.closest('[data-copy]'); if (c) { copy(c.dataset.copy); return; }
     const sr = e.target.closest('[data-search]'); if (sr) { try { navigator.clipboard && navigator.clipboard.writeText(sr.dataset.search); } catch (_) {} toast('📋 „' + sr.dataset.search + '“ kopirano – zalijepi u pretragu', 3000); return; } // v127: link se otvara sam, ovdje samo kopiramo ime
+    const pt = e.target.closest('[data-part]'); if (pt) { haptic(); const f = pt.dataset.part, to = o[f] === 'Da' ? 'Ne' : 'Da'; patchOrder(o.id, { [f]: to }); const l = (PARTS.find(x => x[0] === f) || [])[2]; toast(to === 'Da' ? '✓ ' + l + ' gotovo' : l + ': nije još'); return; }
     const a = e.target.closest('[data-a]'); if (!a) return; haptic();
     if (a.dataset.a === 'status') statusSheet(o.id);
     if (a.dataset.a === 'paid') { const to = o.paid === 'Da' ? 'Ne' : 'Da'; if (confirm(to === 'Da' ? 'Označiti kao PLAĆENO?' : 'Vratiti na NEPLAĆENO?')) { patchOrder(o.id, { paid: to }); toast(to === 'Da' ? '✅ Plaćeno' : 'Neplaćeno'); } }
@@ -934,7 +947,7 @@ renderAll = function () { _renderAll(); refreshOpenScreens(); };
 const FIELDS = [
   ['Kupac', [['fullname', 'Ime i prezime'], ['name', 'Profil / nadimak'], ['platform', 'Platforma', 'sel', ['Instagram', 'Facebook', 'TikTok', 'Osobno', 'Preporuka']], ['tel', 'Mobitel', 'tel'], ['email', 'E-mail', 'email']]],
   ['Proizvod', [['okvir', 'Proizvod', 'sel', Object.keys(OKV)], ['vozac', 'Vozač', 'list:vozaci'], ['staza', 'Staza', 'list:staze'], ['godina', 'Godina', 'num'], ['tekst', 'Tekst na okviru'], ['posveta', 'Posveta', 'sel', ['Ne', 'Da']], ['posveta_tekst', 'Tekst posvete', 'area'], ['kuglice', 'Kuglice (npr. 1x Max Verstappen (VER))'], ['privjesci', 'Privjesci']]],
-  ['Status i rok', [['status', 'Status', 'sel', ST], ['paid', 'Plaćeno', 'sel', ['Ne', 'Da']], ['rok_isporuke', 'Rok isporuke', 'date'], ['hs_print', 'HS print', 'sel', ['Ne', 'Da']]]],
+  ['Status i rok', [['status', 'Status', 'sel', ST], ['paid', 'Plaćeno', 'sel', ['Ne', 'Da']], ['rok_isporuke', 'Rok isporuke', 'date'], ['hs_print', 'HS print', 'sel', ['Ne', 'Da']], ['bolid_stanje', 'Bolid spreman', 'sel', ['Ne', 'Da']], ['print3d', '3D staza isprintana', 'sel', ['Ne', 'Da']]]],
   ['Dostava', [['boxnow', 'Paketomat (#ID adresa)'], ['boxnow_locker_id', 'ID paketomata', 'num'], ['tracking', 'BOX NOW ID / tracking'], ['dostava_ime', 'Primatelj'], ['ulica', 'Ulica'], ['grad', 'Grad'], ['pbr', 'Poštanski broj', 'num']]],
   ['Financije', [['cijena', 'Cijena €', 'dec'], ['cost_bolid', 'Trošak bolid', 'dec'], ['cost_okvir', 'Trošak okvir', 'dec'], ['cost_print', 'Trošak print', 'dec'], ['cost_pakiranje', 'Pakiranje', 'dec'], ['cost_dostava', 'Dostava', 'dec'], ['cost_3dmat', '3D materijal', 'dec'], ['cost_kuglica', 'Kuglica', 'dec'], ['cost_privjesak', 'Privjesak', 'dec'], ['cost_kal', 'Kalendar', 'dec'], ['cost_lego', 'Lego', 'dec'], ['cost_folija', 'Ostalo', 'dec']]],
   ['Napomene', [['note', 'Napomena', 'area'], ['priv_note', 'Interna napomena', 'area']]]
@@ -942,7 +955,7 @@ const FIELDS = [
 const COSTS = ['cost_bolid', 'cost_okvir', 'cost_print', 'cost_pakiranje', 'cost_dostava', 'cost_3dmat', 'cost_kuglica', 'cost_privjesak', 'cost_kal', 'cost_lego', 'cost_folija'];
 function openForm(id) {
   const o = id ? D.orders.find(x => String(x.id) === String(id)) : null;
-  const orig = o ? Object.assign({}, o) : { status: 'Novo', paid: 'Ne', platform: 'Instagram', okvir: 'F1 okvir vozac i staza', posveta: 'Ne', hs_print: 'Ne' };
+  const orig = o ? Object.assign({}, o) : { status: 'Novo', paid: 'Ne', platform: 'Instagram', okvir: 'F1 okvir vozac i staza', posveta: 'Ne', hs_print: 'Ne', bolid_stanje: 'Ne', print3d: 'Ne' };
   const uniq = k => [...new Set(D.orders.map(x => x[k]).filter(Boolean))].sort();
   const val = k => orig[k] == null ? '' : String(orig[k]);
   const inp = ([k, l, t, opts]) => {
@@ -1024,7 +1037,7 @@ function bcard(o) {
     + '<div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)">' + esc(prod(o)) + '</div>'
     + '<div style="font-weight:650;font-size:15px;margin-top:2px;padding-right:30px">' + esc(oname(o)) + '</div>'
     + (sub ? '<div class="rs">' + esc(sub) + '</div>' : '')
-    + '<div class="pills">' + (isRadim(o) ? rdPill : '') + '<span class="pill">' + eur2(o.cijena) + '</span>' + rokPill(o) + bnPill(o) + paidPill(o) + (isFrame(o) && o.hs_print === 'Da' && o.status === 'Novo' ? pill('🖨 HS') : '') + '</div></div>';
+    + '<div class="pills">' + (isRadim(o) ? rdPill : '') + '<span class="pill">' + eur2(o.cijena) + '</span>' + rokPill(o) + bnPill(o) + paidPill(o) + partsPills(o) + '</div></div>';
 }
 
 /* ── SKLADIŠTE ── */
