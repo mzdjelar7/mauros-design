@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v138 | 2026-11-20 | popravak: zaglavlje narudžbe više nije tamno-zeleno (sukob klase .hero → .rhero) | v137: izvještaj: swipe koji prati prst + animacije, graf po danima (mjesec i dan), dnevni prozor stalne visine, novi hero izgled | v136: izvještaj: ‹ › i swipe po mjesecima/godinama, kalendar dana + dnevni izvještaj (tko je što naručio), vozači/staze sažeto | v135: ploča ostaje na istom mjestu nakon izmjene (stupci ne skaču na vrh) | v134: okvir = 3 dijela: 🖨 HS print · 🏎 Bolid · 🧊 3D staza (oznake na kartici, gumbi u narudžbi) | v133: centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<!-- MAUROS VERSION: PWA v139 | 2026-11-22 | skladište: bolid po narudžbi (orders_bolid) na karticama, kupci uz „kupiti“, nabava kasni, osvježi nakon 🏎 | v138: popravak: zaglavlje narudžbe više nije tamno-zeleno (sukob klase .hero → .rhero) | v137: izvještaj: swipe koji prati prst + animacije, graf po danima (mjesec i dan), dnevni prozor stalne visine, novi hero izgled | v136: izvještaj: ‹ › i swipe po mjesecima/godinama, kalendar dana + dnevni izvještaj (tko je što naručio), vozači/staze sažeto | v135: ploča ostaje na istom mjestu nakon izmjene (stupci ne skaču na vrh) | v134: okvir = 3 dijela: 🖨 HS print · 🏎 Bolid · 🧊 3D staza (oznake na kartici, gumbi u narudžbi) | v133: centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -318,7 +318,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 /* ═════════ OSNOVA ═════════ */
 const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
-const VERSION = 'v138';
+const VERSION = 'v139';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
@@ -376,8 +376,8 @@ function logout() {
   if (!confirm('Odjaviti se s ovog mobitela?')) return;
   const t = S && S.access_token;
   if (t) fetch(SB + '/auth/v1/logout', { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + t } }).catch(() => {});
-  authSave(null); ['m5_orders','m5_stock','m5_nabava','m5_stanje','m5_ads'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
-  D = { orders: [], stock: [], nabava: [], stanje: [], ads: [] }; closeAll(); renderAll(); authShow();
+  authSave(null); ['m5_orders','m5_stock','m5_nabava','m5_stanje','m5_ads','m5_ob'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+  D = { orders: [], stock: [], nabava: [], stanje: [], ads: [], ob: [] }; closeAll(); renderAll(); authShow();
 }
 
 /* ═════════ PODACI – siguran sloj ═════════
@@ -394,10 +394,10 @@ async function rest(method, path, body, prefer) {
   if (!r.ok) { const e = new Error((d && (d.message || d.hint)) || ('HTTP ' + r.status)); e.status = r.status; e.code = d && d.code; throw e; }
   return d;
 }
-let D = { orders: LS.get('m5_orders', []), stock: LS.get('m5_stock', []), nabava: LS.get('m5_nabava', []), stanje: LS.get('m5_stanje', []), ads: LS.get('m5_ads', []) };
+let D = { orders: LS.get('m5_orders', []), stock: LS.get('m5_stock', []), nabava: LS.get('m5_nabava', []), stanje: LS.get('m5_stanje', []), ads: LS.get('m5_ads', []), ob: LS.get('m5_ob', []) };
 let Q = LS.get('m5_queue', []);
 let lastSync = LS.get('m5_lastsync', null), loading = false, online = true;
-function persist() { LS.set('m5_orders', D.orders); LS.set('m5_stock', D.stock); LS.set('m5_nabava', D.nabava); LS.set('m5_stanje', D.stanje); LS.set('m5_ads', D.ads); }
+function persist() { LS.set('m5_orders', D.orders); LS.set('m5_stock', D.stock); LS.set('m5_nabava', D.nabava); LS.set('m5_stanje', D.stanje); LS.set('m5_ads', D.ads); LS.set('m5_ob', D.ob); }
 function saveQ() { if (!LS.set('m5_queue', Q)) toast('⚠ Memorija mobitela je puna – izmjena možda nije sačuvana lokalno!', 4000); }
 const STATUS_MAP = { 'Printano': 'Print poslan', 'U pripremi': 'U izradi', 'Isporuceno': 'Isporučeno' };
 function normalize() { D.orders.forEach(o => { if (STATUS_MAP[o.status]) o.status = STATUS_MAP[o.status]; }); }
@@ -441,13 +441,15 @@ setInterval(() => { if (Q.some(x => !x.failed)) flush(); }, 20000);
 async function loadAll(silent) {
   if (loading) return; loading = true; setSync();
   try {
-    const [o, s, n, st, a] = await Promise.all([
+    const [o, s, n, st, a, ob] = await Promise.all([
       rest('GET', 'orders?select=*&order=inserted_at.desc&limit=5000'),
       rest('GET', 'stock?select=*&limit=3000'),
       rest('GET', 'nabava?select=*&order=id.desc&limit=3000'),
       rest('GET', 'skladiste_stanje?select=*'),
-      rest('GET', 'ad_costs?select=*&limit=1000')
+      rest('GET', 'ad_costs?select=*&limit=1000'),
+      rest('GET', 'orders_bolid?select=*')
     ]);
+    if (Array.isArray(ob)) D.ob = ob; // v139
     if (Array.isArray(o) && (o.length || !D.orders.length)) D.orders = o;
     if (Array.isArray(s)) D.stock = s;
     if (Array.isArray(n)) D.nabava = n;
@@ -674,6 +676,15 @@ const paidPill = o => o.paid === 'Da' ? '' : pill('Neplaćeno', 'red');
 const PARTS = [['hs_print', '🖨', 'HS print'], ['bolid_stanje', '🏎', 'Bolid'], ['print3d', '🧊', '3D staza']];
 const partsPills = o => isFrame(o) ? PARTS.map(([f, i, l]) => pill(i + ' ' + (f === 'hs_print' ? 'HS' : f === 'print3d' ? '3D' : 'Bolid') + (o[f] === 'Da' ? ' ✓' : ''), o[f] === 'Da' ? 'green' : 'off')).join('') : '';
 const partsDone = o => PARTS.every(([f]) => o[f] === 'Da');
+// v139: odakle dolazi bolid za ovu narudžbu (pogled orders_bolid)
+const dmS = x => x ? new Date(x).toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric' }) : '';
+function blPill(o) {
+  const b = (D.ob || []).find(x => x.id === o.id); if (!b || b.stanje === 'ugradjen') return '';
+  if (b.stanje === 'zaliha') return pill('🏎 na zalihi', 'green');
+  if (b.stanje === 'put') return pill('🚚 bolid ' + (b.eta ? dmS(b.eta) : 'na putu'), 'blue');
+  return pill('🛒 naruči bolid', 'red');
+}
+const kupciZa = (vozac, godina) => (D.ob || []).filter(b => b.vozac === vozac && b.bolid_godina === godina && b.stanje === 'naruci').map(b => { const o = D.orders.find(x => x.id === b.id); return o ? oname(o) : null; }).filter(Boolean);
 // v130: narudžbe na kojima sad radiš (orders.radim = 'Da')
 const isRadim = o => o.radim === 'Da' && !done(o);
 const rdPill = '<span class="pill p-rd">🔨 Radim</span>';
@@ -681,7 +692,7 @@ function orderRow(o) {
   const sub = [o.vozac, short(o.staza), o.godina].filter(Boolean).join(' · ') || o.kuglice || o.privjesci || '';
   return '<button class="row' + (isRadim(o) ? ' radim' : '') + '" data-open="' + esc(o.id) + '">' + avatar(o) + '<div class="rm"><div class="rt"><b>' + esc(oname(o)) + '</b><span class="price">' + eur2(o.cijena) + '</span></div>'
     + '<div class="rs">' + esc(prod(o)) + (sub ? ' · ' + esc(sub) : '') + '</div>'
-    + '<div class="pills">' + (isRadim(o) ? rdPill : '') + stPill(o) + rokPill(o) + bnPill(o) + paidPill(o) + '</div></div></button>';
+    + '<div class="pills">' + (isRadim(o) ? rdPill : '') + stPill(o) + rokPill(o) + bnPill(o) + paidPill(o) + blPill(o) + '</div></div></button>';
 }
 const QF = {
   aktivne: { l: 'Aktivne', f: o => !done(o) },
@@ -813,7 +824,7 @@ function renderHome() {
   const buy = D.stanje.filter(s => s.treba_kupiti > 0), wait = D.stanje.filter(s => s.slobodno < 0 && !(s.treba_kupiti > 0));
   const putuje = D.nabava.filter(n => n.status === 'Naručeno' || n.status === 'Poslano');
   html += '<div class="sec"><div class="sec-h"><h2>Skladište</h2><a onclick="go(\'stock\')">Otvori ›</a></div><div class="card">'
-    + (buy.length ? buy.map(s => '<div class="row"><div class="av" style="background:var(--redBg);color:var(--red)">!</div><div class="rm"><div class="rt"><b>' + esc(s.vozac) + ' ' + esc(s.godina) + '</b><span class="price" style="color:var(--red)">kupiti ' + s.treba_kupiti + '</span></div><div class="rs">rezervirano ' + s.rezervirano + ' · na zalihi ' + s.na_zalihi + '</div></div></div>').join('') : '<div class="row"><div class="av" style="background:var(--greenBg);color:var(--green)">✓</div><div class="rm"><b>Svi bolidi su pokriveni</b><div class="rs">' + (wait.length ? wait.length + ' čeka dostavu' : 'zaliha je dovoljna') + '</div></div></div>')
+    + (buy.length ? buy.map(s => '<div class="row"><div class="av" style="background:var(--redBg);color:var(--red)">!</div><div class="rm"><div class="rt"><b>' + esc(s.vozac) + ' ' + esc(s.godina) + '</b><span class="price" style="color:var(--red)">kupiti ' + s.treba_kupiti + '</span></div><div class="rs">' + esc(kupciZa(s.vozac, s.godina).join(', ') || ('rezervirano ' + s.rezervirano + ' · na zalihi ' + s.na_zalihi)) + '</div></div></div>').join('') : '<div class="row"><div class="av" style="background:var(--greenBg);color:var(--green)">✓</div><div class="rm"><b>Svi bolidi su pokriveni</b><div class="rs">' + (wait.length ? wait.length + ' čeka dostavu' : 'zaliha je dovoljna') + '</div></div></div>')
     + '<div class="row" onclick="go(\'stock\');stockSeg=\'nabava\';renderStock()"><div class="av" style="background:var(--blueBg);color:var(--blue)">🚚</div><div class="rm"><b>Na putu: ' + putuje.reduce((s, n) => s + (n.kolicina || 1), 0) + ' kom</b><div class="rs">' + esc([...new Set(putuje.map(n => n.dobavljac))].join(', ') || 'ništa nije na putu') + '</div></div></div>'
     + '</div></div>';
   html += '<div class="note" style="text-align:center;margin:18px">Zadnje osvježeno ' + (lastSync ? new Date(lastSync).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' }) : '—') + ' · MaurOS ' + VERSION + '</div>';
@@ -935,7 +946,7 @@ function drawOrder(el) {
   el.querySelector('.t').textContent = oname(o);
   el.querySelector('.sbody').innerHTML =
     '<div class="hero"><h2>' + esc(oname(o)) + '</h2><div class="p">' + esc(prod(o)) + (o.vozac ? ' · ' + esc(o.vozac) : '') + (o.staza ? ' · ' + esc(short(o.staza)) : '') + (o.godina ? ' ' + esc(o.godina) : '') + '</div>'
-    + '<div class="pills">' + stPill(o) + rokPill(o) + bnPill(o) + (o.paid === 'Da' ? pill('Plaćeno', 'green') : pill('Neplaćeno', 'red')) + partsPills(o) + '</div></div>'
+    + '<div class="pills">' + stPill(o) + rokPill(o) + bnPill(o) + (o.paid === 'Da' ? pill('Plaćeno', 'green') : pill('Neplaćeno', 'red')) + blPill(o) + partsPills(o) + '</div></div>'
     + '<div class="actions">'
     + '<button class="act" data-a="status"><span class="i">🔄</span>Status</button>'
     + '<button class="act" data-a="paid"><span class="i">' + (o.paid === 'Da' ? '💶' : '💸') + '</span>' + (o.paid === 'Da' ? 'Plaćeno' : 'Označi plaćeno') + '</button>'
@@ -954,7 +965,7 @@ function drawOrder(el) {
   el.querySelector('.sbody').onclick = e => {
     const c = e.target.closest('[data-copy]'); if (c) { copy(c.dataset.copy); return; }
     const sr = e.target.closest('[data-search]'); if (sr) { try { navigator.clipboard && navigator.clipboard.writeText(sr.dataset.search); } catch (_) {} toast('📋 „' + sr.dataset.search + '“ kopirano – zalijepi u pretragu', 3000); return; } // v127: link se otvara sam, ovdje samo kopiramo ime
-    const pt = e.target.closest('[data-part]'); if (pt) { haptic(); const f = pt.dataset.part, to = o[f] === 'Da' ? 'Ne' : 'Da'; patchOrder(o.id, { [f]: to }); const l = (PARTS.find(x => x[0] === f) || [])[2]; toast(to === 'Da' ? '✓ ' + l + ' gotovo' : l + ': nije još'); return; }
+    const pt = e.target.closest('[data-part]'); if (pt) { haptic(); const f = pt.dataset.part, to = o[f] === 'Da' ? 'Ne' : 'Da'; patchOrder(o.id, { [f]: to }); if (f === 'bolid_stanje') setTimeout(() => loadAll(true), 2500); const l = (PARTS.find(x => x[0] === f) || [])[2]; toast(to === 'Da' ? '✓ ' + l + ' gotovo' : l + ': nije još'); return; }
     const a = e.target.closest('[data-a]'); if (!a) return; haptic();
     if (a.dataset.a === 'status') statusSheet(o.id);
     if (a.dataset.a === 'paid') { const to = o.paid === 'Da' ? 'Ne' : 'Da'; if (confirm(to === 'Da' ? 'Označiti kao PLAĆENO?' : 'Vratiti na NEPLAĆENO?')) { patchOrder(o.id, { paid: to }); toast(to === 'Da' ? '✅ Plaćeno' : 'Neplaćeno'); } }
@@ -1093,7 +1104,7 @@ function bcard(o) {
     + '<div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)">' + esc(prod(o)) + '</div>'
     + '<div style="font-weight:650;font-size:15px;margin-top:2px;padding-right:30px">' + esc(oname(o)) + '</div>'
     + (sub ? '<div class="rs">' + esc(sub) + '</div>' : '')
-    + '<div class="pills">' + (isRadim(o) ? rdPill : '') + '<span class="pill">' + eur2(o.cijena) + '</span>' + rokPill(o) + bnPill(o) + paidPill(o) + partsPills(o) + '</div></div>';
+    + '<div class="pills">' + (isRadim(o) ? rdPill : '') + '<span class="pill">' + eur2(o.cijena) + '</span>' + rokPill(o) + bnPill(o) + paidPill(o) + blPill(o) + partsPills(o) + '</div></div>';
 }
 
 /* ── SKLADIŠTE ── */
@@ -1110,7 +1121,8 @@ function renderStock() {
       + '<div class="sec" style="margin-top:0"><div class="card">' + (l.length ? l.map(s => {
         const st = s.treba_kupiti > 0 ? ['KUPITI ' + s.treba_kupiti, 'red'] : s.slobodno < 0 ? ['čeka dostavu', 'amber'] : s.slobodno === 0 && s.rezervirano ? ['sve rezervirano', 'amber'] : ['slobodno ' + s.slobodno, 'green'];
         return '<div class="row"><div class="av" style="background:var(--' + st[1] + 'Bg);color:var(--' + st[1] + ')">' + (s.slobodno > 0 ? s.slobodno : s.treba_kupiti > 0 ? '!' : s.slobodno) + '</div><div class="rm"><div class="rt"><b>' + esc(s.vozac) + '</b><span class="price">' + esc(s.godina) + '</span></div>'
-          + '<div class="pills">' + pill(st[0], st[1]) + pill('zaliha ' + s.na_zalihi) + pill('rezerv. ' + s.rezervirano) + (s.na_putu ? pill('🚚 ' + s.na_putu + (s.eta ? ' · ' + new Date(s.eta).toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric' }) : ''), 'blue') : '') + '</div></div></div>';
+          + '<div class="pills">' + pill(st[0], st[1]) + pill('zaliha ' + s.na_zalihi) + pill('rezerv. ' + s.rezervirano) + (s.na_putu ? pill('🚚 ' + s.na_putu + (s.eta ? ' · ' + new Date(s.eta).toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric' }) : ''), 'blue') : '') + '</div>'
+          + (s.treba_kupiti > 0 && kupciZa(s.vozac, s.godina).length ? '<div class="rs" style="margin-top:4px">🛒 čekaju: ' + esc(kupciZa(s.vozac, s.godina).join(', ')) + '</div>' : '') + '</div></div>';
       }).join('') : '<div class="empty">Nema podataka</div>') + '</div></div>';
   } else if (stockSeg === 'nabava') {
     const act = D.nabava.filter(n => n.status !== 'Stiglo' && n.status !== 'Otkazano'), old = D.nabava.filter(n => n.status === 'Stiglo').slice(0, 30);
@@ -1119,7 +1131,7 @@ function renderStock() {
       const n0 = l[0], tr = n0.tracking, eta = n0.eta_od ? new Date(n0.eta_od).toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric' }) + (n0.eta_do && n0.eta_do !== n0.eta_od ? '–' + new Date(n0.eta_do).toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric' }) : '') : 'bez ETA';
       const stTxt = n0.status === 'Poslano' ? '🚚 Na putu (poslano)' : n0.status === 'Naručeno' ? '⏳ Naručeno – još nije poslano' : n0.status;
       return '<div class="sec"><div class="sec-h"><h2 style="font-size:15px">' + esc(k) + '</h2></div><div class="card">'
-        + '<div class="kv"><span class="k">Status</span><span class="vv"><span class="pill p-' + (n0.status === 'Poslano' ? 'blue' : 'amber') + '">' + esc(stTxt) + '</span></span></div>'
+        + '<div class="kv"><span class="k">Status</span><span class="vv"><span class="pill p-' + (n0.status === 'Poslano' ? 'blue' : 'amber') + '">' + esc(stTxt) + '</span>' + (n0.eta_do && new Date(n0.eta_do) < today0() ? ' <span class="pill p-red">kasni</span>' : '') + '</span></div>'
         + (n0.kurir ? '<div class="kv"><span class="k">Kurir</span><span class="vv">' + esc(n0.kurir) + '</span></div>' : '')
         + '<div class="kv"><span class="k">Dolazak</span><span class="vv">' + esc(eta) + '</span></div>'
         + (tr ? '<div class="kv"><span class="k">Tracking</span><span class="vv mono">' + esc(tr) + ' <span class="copy" data-copy="' + esc(tr) + '">kopiraj</span> <a class="copy" target="_blank" rel="noopener" href="' + trackUrl(tr, n0.kurir) + '">prati ›</a></span></div>' : '')
