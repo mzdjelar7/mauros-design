@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- MAUROS VERSION: PWA v139 | 2026-11-22 | skladište: bolid po narudžbi (orders_bolid) na karticama, kupci uz „kupiti“, nabava kasni, osvježi nakon 🏎 | v138: popravak: zaglavlje narudžbe više nije tamno-zeleno (sukob klase .hero → .rhero) | v137: izvještaj: swipe koji prati prst + animacije, graf po danima (mjesec i dan), dnevni prozor stalne visine, novi hero izgled | v136: izvještaj: ‹ › i swipe po mjesecima/godinama, kalendar dana + dnevni izvještaj (tko je što naručio), vozači/staze sažeto | v135: ploča ostaje na istom mjestu nakon izmjene (stupci ne skaču na vrh) | v134: okvir = 3 dijela: 🖨 HS print · 🏎 Bolid · 🧊 3D staza (oznake na kartici, gumbi u narudžbi) | v133: centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
+<!-- MAUROS VERSION: PWA v140 | 2026-11-23 | ploča: pretraga (ime, mobitel, adresa, paketomat, tracking, vozač) bez kvačica, skok na prvi stupac s rezultatom | v139: skladište: bolid po narudžbi (orders_bolid) na karticama, kupci uz „kupiti“, nabava kasni, osvježi nakon 🏎 | v138: popravak: zaglavlje narudžbe više nije tamno-zeleno (sukob klase .hero → .rhero) | v137: izvještaj: swipe koji prati prst + animacije, graf po danima (mjesec i dan), dnevni prozor stalne visine, novi hero izgled | v136: izvještaj: ‹ › i swipe po mjesecima/godinama, kalendar dana + dnevni izvještaj (tko je što naručio), vozači/staze sažeto | v135: ploča ostaje na istom mjestu nakon izmjene (stupci ne skaču na vrh) | v134: okvir = 3 dijela: 🖨 HS print · 🏎 Bolid · 🧊 3D staza (oznake na kartici, gumbi u narudžbi) | v133: centar obavijesti (zvonce, povijest svih obavijesti, detalji i dnevnik agenata) | v132: push obavijesti (paketomat / preuzeto / agenti), dnevni izvještaj zarade (danas / jučer / 7 dana) | v131: novi status "Radim sad" (između U izradi i Završeno) | v130: "Radim sad": obojane kartice (orders.radim), sekcija na Početnoj, gumb u narudžbi | v129: gumb Osvježi BOX NOW statuse, vrijeme ulaska u paketomat, jasan status nabave (gumb Označi da je stiglo) | v128: Chat/Profil na Androidu otvara aplikaciju (intent) umjesto praznog prozora | v127: izvještaj: dodir na mjesec u grafu i trake kao filteri; Chat kao pravi link (otvara se odmah) | v126: gumb Chat (Instagram DM / Business Suite inbox) umjesto Nazovi, nove ikone s logom | v125: potpuno nova mobilna aplikacija: siguran red izmjena (ništa se ne briše, šalju se samo promijenjena polja), interaktivna početna, ploča sa swipeom, swipe-back, skladište+nabava, detaljan izvještaj s filterima -->
 <html lang="hr">
 <head>
 <meta charset="UTF-8">
@@ -117,6 +117,9 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .more{width:100%;padding:14px;font-weight:650;color:var(--blue);font-size:14px}
 /* board */
 #bchips{flex-shrink:0;padding-top:4px}
+#bsearch{flex-shrink:0;margin:8px 16px 4px}
+#bbody{flex:1;display:flex;flex-direction:column;min-height:0}
+.bhit{margin:0 16px 4px;font-size:12px;color:var(--mute)}
 #btrack{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
 #btrack::-webkit-scrollbar{display:none}
 .bcol{flex:0 0 100%;scroll-snap-align:center;overflow-y:auto;padding:2px 16px calc(var(--tab) + var(--sb) + 40px);-webkit-overflow-scrolling:touch}
@@ -318,7 +321,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 /* ═════════ OSNOVA ═════════ */
 const SB = 'https://pmryofebuyjmaopbmtzz.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcnlvZmVidXlqbWFvcGJtdHp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Nzc4NjAsImV4cCI6MjA5NjM1Mzg2MH0.8gvDMDzfUN7mmTv-WpUoYac_YcUdNiMeX0ZV_RNlgqw';
-const VERSION = 'v139';
+const VERSION = 'v140';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? 0 : n; };
@@ -1060,26 +1063,47 @@ function openForm(id) {
 
 /* ── PLOČA ── */
 const BCOLS = ST;
-let bIdx = 0;
+let bIdx = 0, bJump = false;
+// v140: pretraga na ploči (npr. na paketomatu HP – upiši ime ili mobitel)
+let bQ = '';
+const fold = x => String(x == null ? '' : x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+function bMatch(o) {
+  if (!bQ) return true;
+  const hay = fold([o.fullname, o.name, o.dostava_ime, o.tel, o.email, o.adresa, o.ulica, o.grad, o.pbr, o.boxnow, o.boxnow_locker_id, o.tracking, o.vozac, o.staza, o.godina, o.okvir, o.kuglice, o.privjesci, o.id].join(' '));
+  const words = fold(bQ).split(/\s+/).filter(Boolean);
+  const digits = bQ.replace(/\D/g, '');
+  const telD = String(o.tel || '').replace(/\D/g, '');
+  if (digits.length >= 4 && digits === bQ.replace(/[\s+\-\/]/g, '') && (telD.includes(digits) || telD.includes(digits.replace(/^0/, '')) || String(o.tracking || '').includes(digits))) return true;
+  return words.every(w => hay.includes(w));
+}
 function renderBoard() {
   const v = $('#v-board');
   $('#subtitle').textContent = 'Povuci lijevo/desno · drži karticu za status';
+  if (!$('#bsearch')) {
+    v.innerHTML = '<div class="search" id="bsearch"><span>🔍</span><input id="bq" type="search" placeholder="Ime, mobitel, adresa, paketomat, tracking…" autocomplete="off" enterkeyhint="search"></div><div id="bbody"></div>';
+    let tq; $('#bq').addEventListener('input', e => { clearTimeout(tq); tq = setTimeout(() => { bQ = e.target.value.trim(); bJump = true; renderBoard(); }, 150); });
+    $('#bq').value = bQ;
+  }
+  const body = $('#bbody');
   const cols = BCOLS.map(s => {
-    let l = D.orders.filter(o => o.status === s);
+    let l = D.orders.filter(o => o.status === s && bMatch(o));
     l.sort(s === 'Isporučeno' || s === 'Poslano' ? (a, b) => (created(b) || 0) - (created(a) || 0) : (a, b) => (isRadim(b) - isRadim(a)) || byRok(a, b)); // v130: Radim sad na vrh
     return { s, l, all: l.length };
   });
   const keepScroll = $('#btrack') ? $('#btrack').scrollLeft : null;
   const keepY = [...document.querySelectorAll('#btrack .bcol')].map(c => c.scrollTop); // v135: vertikalna pozicija svakog stupca
-  v.innerHTML = '<div id="bchips" class="hscroll">' + cols.map((c, i) => '<button class="chip' + (i === bIdx ? ' on' : '') + '" data-i="' + i + '"><span style="color:' + STHEX[c.s] + '">●</span> ' + esc(c.s) + '<span class="n">' + c.all + '</span></button>').join('') + '</div>'
+  if (bQ && bJump) { const f = cols.findIndex(c => c.l.length); if (f >= 0 && !cols[bIdx].l.length) bIdx = f; }
+  const hits = cols.reduce((s, c) => s + c.l.length, 0);
+  body.innerHTML = (bQ ? '<div class="bhit">' + (hits ? hits + (hits % 10 === 1 && hits % 100 !== 11 ? ' pogodak' : [2,3,4].includes(hits % 10) && ![12,13,14].includes(hits % 100) ? ' pogotka' : ' pogodaka') + ' · ' + cols.filter(c => c.l.length).map(c => esc(c.s) + ' ' + c.l.length).join(', ') : 'Nema pogodaka za „' + esc(bQ) + '“') + '</div>' : '') + '<div id="bchips" class="hscroll">' + cols.map((c, i) => '<button class="chip' + (i === bIdx ? ' on' : '') + '" data-i="' + i + '"><span style="color:' + STHEX[c.s] + '">●</span> ' + esc(c.s) + '<span class="n">' + c.all + '</span></button>').join('') + '</div>'
     + '<div class="pager">' + cols.map((c, i) => '<i class="' + (i === bIdx ? 'on' : '') + '"></i>').join('') + '</div>'
     + '<div id="btrack">' + cols.map(c => {
-      const lim = (c.s === 'Isporučeno') ? 40 : 400;
+      const lim = (c.s === 'Isporučeno' && !bQ) ? 40 : 400;
       return '<div class="bcol"><div class="bhead"><span style="color:' + STHEX[c.s] + '">●</span>' + esc(c.s) + '<span class="cnt">' + c.all + ' · ' + eur(c.l.reduce((s, o) => s + num(o.cijena), 0)) + '</span></div>'
-        + (c.l.length ? c.l.slice(0, lim).map(bcard).join('') + (c.all > lim ? '<div class="note" style="text-align:center">+ još ' + (c.all - lim) + ' (vidi Narudžbe)</div>' : '') : '<div class="empty">Prazno</div>') + '</div>';
+        + (c.l.length ? c.l.slice(0, lim).map(bcard).join('') + (c.all > lim ? '<div class="note" style="text-align:center">+ još ' + (c.all - lim) + ' (vidi Narudžbe)</div>' : '') : '<div class="empty">' + (bQ ? 'Nema pogodaka' : 'Prazno') + '</div>') + '</div>';
     }).join('') + '</div>';
   const tr = $('#btrack');
-  if (keepScroll != null) tr.scrollLeft = keepScroll; else tr.scrollLeft = bIdx * tr.clientWidth;
+  if (keepScroll != null && !bJump) tr.scrollLeft = keepScroll; else tr.scrollLeft = bIdx * tr.clientWidth;
+  bJump = false;
   tr.querySelectorAll('.bcol').forEach((c, i) => { if (keepY[i]) c.scrollTop = keepY[i]; });
   let t; tr.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => { const i = Math.round(tr.scrollLeft / tr.clientWidth); if (i !== bIdx) { bIdx = i; markBoard(); } }, 60); }, { passive: true });
   $('#bchips').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (!b) return; haptic(); bIdx = +b.dataset.i; tr.scrollTo({ left: bIdx * tr.clientWidth, behavior: 'smooth' }); markBoard(); });
